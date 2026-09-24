@@ -4,9 +4,6 @@ import com.altnoir.mia.common.component.ArtifactBundleInventoryComponent;
 import com.altnoir.mia.init.MiaComponents;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.Holder;
@@ -28,6 +25,10 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import top.theillusivec4.curios.api.SlotContext;
 
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Optional;
+
 public abstract class AbsArtifactBundle extends Item implements IArtifactItem {
 
     public static final String TOOLTIP_ARTIFACT_BUNDLE_CAPACITY =
@@ -41,6 +42,20 @@ public abstract class AbsArtifactBundle extends Item implements IArtifactItem {
                 properties.component(
                         MiaComponents.ARTIFACT_BUNDLE_INVENTORY,
                         ArtifactBundleInventoryComponent.EMPTY));
+    }
+
+    private static void playRemoveOneSound(Entity entity) {
+        entity.playSound(
+                SoundEvents.BUNDLE_REMOVE_ONE,
+                0.8F,
+                0.8F + entity.level().getRandom().nextFloat() * 0.4F);
+    }
+
+    private static void playInsertSound(Entity entity) {
+        entity.playSound(
+                SoundEvents.BUNDLE_INSERT,
+                0.8F,
+                0.8F + entity.level().getRandom().nextFloat() * 0.4F);
     }
 
     @Override
@@ -77,6 +92,8 @@ public abstract class AbsArtifactBundle extends Item implements IArtifactItem {
         return attributeModifiers;
     }
 
+    public abstract int getCapacity();
+
     @NotNull @Override
     public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
         if (!Screen.hasShiftDown()) {
@@ -110,8 +127,6 @@ public abstract class AbsArtifactBundle extends Item implements IArtifactItem {
                         .withStyle(style -> style.withColor(ChatFormatting.GOLD)));
         IArtifactItem.super.appendTooltip(stack, tooltip);
     }
-
-    public abstract int getCapacity();
 
     @Override
     public boolean isBarVisible(ItemStack itemStack) {
@@ -210,20 +225,6 @@ public abstract class AbsArtifactBundle extends Item implements IArtifactItem {
         }
         itemStack.set(MiaComponents.ARTIFACT_BUNDLE_INVENTORY, contents.immutable());
         return true;
-    }
-
-    private static void playRemoveOneSound(Entity entity) {
-        entity.playSound(
-                SoundEvents.BUNDLE_REMOVE_ONE,
-                0.8F,
-                0.8F + entity.level().getRandom().nextFloat() * 0.4F);
-    }
-
-    private static void playInsertSound(Entity entity) {
-        entity.playSound(
-                SoundEvents.BUNDLE_INSERT,
-                0.8F,
-                0.8F + entity.level().getRandom().nextFloat() * 0.4F);
     }
 
     private void broadcastChangesOnContainerMenu(Player player) {

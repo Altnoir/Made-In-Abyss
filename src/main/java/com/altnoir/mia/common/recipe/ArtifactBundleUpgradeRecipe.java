@@ -10,11 +10,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
-import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraft.world.item.crafting.ShapedRecipePattern;
+import net.minecraft.world.item.crafting.*;
 
 public class ArtifactBundleUpgradeRecipe extends ShapedRecipe {
 
@@ -110,10 +106,10 @@ public class ArtifactBundleUpgradeRecipe extends ShapedRecipe {
         private static ArtifactBundleUpgradeRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
             String s = buffer.readUtf();
             CraftingBookCategory craftingbookcategory =
-                    (CraftingBookCategory) buffer.readEnum(CraftingBookCategory.class);
+                    buffer.readEnum(CraftingBookCategory.class);
             ShapedRecipePattern shapedrecipepattern =
-                    (ShapedRecipePattern) ShapedRecipePattern.STREAM_CODEC.decode(buffer);
-            ItemStack itemstack = (ItemStack) ItemStack.STREAM_CODEC.decode(buffer);
+                    ShapedRecipePattern.STREAM_CODEC.decode(buffer);
+            ItemStack itemstack = ItemStack.STREAM_CODEC.decode(buffer);
             boolean flag = buffer.readBoolean();
             return new ArtifactBundleUpgradeRecipe(
                     s, craftingbookcategory, shapedrecipepattern, itemstack, flag);

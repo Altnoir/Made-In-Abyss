@@ -3,7 +3,6 @@ package com.altnoir.mia.core.spawner;
 import com.altnoir.mia.MIA;
 import com.altnoir.mia.core.spawner.records.AbyssTrialSpawnerPattern;
 import com.altnoir.mia.core.spawner.records.EntityTableInstance;
-import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -30,6 +29,8 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 public class AbyssTrialSpawner {
     private static final int PLAYER_DETECTION_RANGE = 14;

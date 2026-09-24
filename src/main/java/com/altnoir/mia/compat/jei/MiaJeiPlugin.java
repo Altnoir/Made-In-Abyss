@@ -5,7 +5,6 @@ import com.altnoir.mia.common.recipe.LampTubeRecipe;
 import com.altnoir.mia.init.MiaBlocks;
 import com.altnoir.mia.init.MiaRecipes;
 import com.altnoir.mia.util.MiaUtil;
-import javax.annotation.ParametersAreNonnullByDefault;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.recipe.RecipeType;
@@ -18,6 +17,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 @JeiPlugin
 @MethodsReturnNonnullByDefault

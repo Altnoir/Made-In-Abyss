@@ -3,12 +3,13 @@ package com.altnoir.mia.worldgen.structure.wall;
 import com.altnoir.mia.init.worldgen.MiaStructurePlacementTypes;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import java.util.Optional;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacementType;
+
+import java.util.Optional;
 
 public final class AbyssWallStructurePlacement extends StructurePlacement {
     public static final MapCodec<AbyssWallStructurePlacement> CODEC =

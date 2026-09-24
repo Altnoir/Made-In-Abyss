@@ -4,8 +4,6 @@ import com.altnoir.mia.common.block.MiaBrushableBlock;
 import com.altnoir.mia.init.MiaBlockEntities;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import java.util.Objects;
-import javax.annotation.Nullable;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -33,6 +31,9 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
+
+import javax.annotation.Nullable;
+import java.util.Objects;
 
 public class MiaBrushableBlockEntity extends BlockEntity {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -109,7 +110,7 @@ public class MiaBrushableBlockEntity extends BlockEntity {
             this.item =
                     switch (objectarraylist.size()) {
                         case 0 -> ItemStack.EMPTY;
-                        case 1 -> (ItemStack) objectarraylist.get(0);
+                        case 1 -> objectarraylist.get(0);
                         default -> {
                             LOGGER.warn(
                                     "Expected max 1 loot from loot table {}, but got {}",
@@ -150,7 +151,7 @@ public class MiaBrushableBlockEntity extends BlockEntity {
         if (this.level != null && this.level.getServer() != null) {
             this.unpackLootTable(player);
             if (!this.item.isEmpty()) {
-                double d0 = (double) EntityType.ITEM.getWidth();
+                double d0 = EntityType.ITEM.getWidth();
                 double d1 = 1.0 - d0;
                 double d2 = d0 / 2.0;
                 Direction direction = Objects.requireNonNullElse(this.hitDirection, Direction.UP);

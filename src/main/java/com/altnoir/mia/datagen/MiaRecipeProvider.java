@@ -9,10 +9,6 @@ import com.altnoir.mia.init.MiaAttributes;
 import com.altnoir.mia.init.MiaBlocks;
 import com.altnoir.mia.init.MiaItems;
 import com.altnoir.mia.init.MiaTags;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
@@ -30,10 +26,311 @@ import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.conditions.IConditionBuilder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 public class MiaRecipeProvider extends RecipeProvider implements IConditionBuilder {
     public MiaRecipeProvider(
             PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
         super(output, registries);
+    }
+
+    private static void ArtifactBundleUpgrade(RecipeOutput recipeOutput) {
+        ArtifactBundleUpgradeRecipeBuilder.shaped(
+                        RecipeCategory.TOOLS, MiaItems.FANCY_ARTIFACT_BUNDLE, 1)
+                .define('#', Items.IRON_INGOT)
+                .define('$', MiaItems.GRAY_ARTIFACT_BUNDLE.get())
+                .pattern("###")
+                .pattern("#$#")
+                .pattern("###")
+                .unlockedBy(
+                        getHasName(MiaItems.GRAY_ARTIFACT_BUNDLE.get()),
+                        has(MiaItems.GRAY_ARTIFACT_BUNDLE.get()))
+                .save(recipeOutput);
+    }
+
+    private static void ArtifactEnhancement(RecipeOutput recipeOutput) {
+        artifactSmithing(
+                        MiaItems.PRASIOLITE_SHARD.get(),
+                        8,
+                        Attributes.BLOCK_BREAK_SPEED,
+                        DoubleRange.between(0.1, 0.3),
+                        Operation.ADD_MULTIPLIED_TOTAL)
+                .unlockedByMaterial()
+                .save(recipeOutput);
+        artifactSmithing(
+                        Items.IRON_INGOT,
+                        2,
+                        Attributes.KNOCKBACK_RESISTANCE,
+                        DoubleRange.between(0.2, 0.4),
+                        Operation.ADD_MULTIPLIED_BASE)
+                .unlockedByMaterial()
+                .save(recipeOutput);
+        artifactSmithing(
+                        Items.COPPER_INGOT,
+                        3,
+                        Attributes.ARMOR,
+                        DoubleRange.between(0.5, 1.0),
+                        Operation.ADD_VALUE)
+                .unlockedByMaterial()
+                .save(recipeOutput);
+        artifactSmithing(
+                        Items.GOLD_INGOT,
+                        2,
+                        Attributes.ATTACK_DAMAGE,
+                        DoubleRange.between(0.1, 5.0),
+                        Operation.ADD_VALUE)
+                .unlockedByMaterial()
+                .save(recipeOutput);
+        artifactSmithing(
+                        Items.LAPIS_LAZULI,
+                        Attributes.ATTACK_SPEED,
+                        DoubleRange.between(0.5, 1.5),
+                        Operation.ADD_MULTIPLIED_BASE)
+                .unlockedByMaterial()
+                .save(recipeOutput);
+        artifactSmithing(
+                        Items.DIAMOND,
+                        Attributes.SCALE,
+                        DoubleRange.between(-0.5, 1.5),
+                        Operation.ADD_VALUE)
+                .unlockedByMaterial()
+                .save(recipeOutput);
+        artifactSmithing(
+                        Items.EMERALD,
+                        MiaAttributes.CRITICAL_HIT,
+                        DoubleRange.between(0.5, 0.9),
+                        Operation.ADD_VALUE)
+                .unlockedByMaterial()
+                .save(recipeOutput);
+        artifactSmithing(
+                        Items.NETHERITE_INGOT,
+                        Attributes.GRAVITY,
+                        DoubleRange.between(-0.5, 0.5),
+                        Operation.ADD_MULTIPLIED_BASE)
+                .unlockedByMaterial()
+                .save(recipeOutput);
+    }
+
+    private static ArtifactSmithingRecipeBuilder artifactSmithing(
+            ItemLike input, Holder<Attribute> attribute, DoubleRange value, Operation operation) {
+        return ArtifactSmithingRecipeBuilder.create(
+                Ingredient.of(MiaTags.Items.SMITHING_ARTIFACT),
+                new ItemStack(input, 1),
+                attribute,
+                value,
+                operation);
+    }
+
+    private static ArtifactSmithingRecipeBuilder artifactSmithing(
+            ItemLike input,
+            Integer count,
+            Holder<Attribute> attribute,
+            DoubleRange value,
+            Operation operation) {
+        return ArtifactSmithingRecipeBuilder.create(
+                Ingredient.of(MiaTags.Items.SMITHING_ARTIFACT),
+                new ItemStack(input, count),
+                attribute,
+                value,
+                operation);
+    }
+
+    private static void lampTube(
+            RecipeOutput recipeOutput, ItemLike input, Integer count, ItemLike output) {
+        lampTube(recipeOutput, input, count, output, 1);
+    }
+
+    private static void lampTube(
+            RecipeOutput recipeOutput,
+            ItemLike input,
+            Integer count,
+            ItemLike output,
+            Integer resultCount) {
+        LampTubeRecipeBuilder.lampTube(input, count, output, resultCount)
+                .unlockedBy(getHasName(input), has(output))
+                .save(recipeOutput);
+    }
+
+    private static void lampTube(
+            RecipeOutput recipeOutput, ItemLike input, ItemLike output, Integer count, String id) {
+        LampTubeRecipeBuilder.lampTube(input, output, count)
+                .unlockedBy(getHasName(input), has(output))
+                .save(recipeOutput, getItemName(output) + "_from_" + id);
+    }
+
+    private static void lampTube(
+            RecipeOutput recipeOutput, TagKey<Item> tag, ItemLike output, String hasName) {
+        lampTube(recipeOutput, tag, output, 1, hasName);
+    }
+
+    private static void lampTube(
+            RecipeOutput recipeOutput,
+            TagKey<Item> tag,
+            ItemLike output,
+            Integer resultCount,
+            String hasName) {
+        LampTubeRecipeBuilder.lampTube(tag, output, resultCount)
+                .unlockedBy("has_" + hasName, has(output))
+                .save(recipeOutput);
+    }
+
+    private static void woodBlocks(
+            RecipeOutput recipeOutput,
+            ItemLike baseBlock,
+            ItemLike stairs,
+            ItemLike slab,
+            ItemLike fence,
+            ItemLike fenceGate,
+            ItemLike door,
+            ItemLike trapdoor,
+            ItemLike plate,
+            ItemLike button) {
+        stair(recipeOutput, stairs, baseBlock);
+        slab(recipeOutput, RecipeCategory.BUILDING_BLOCKS, slab, baseBlock);
+        fenceBuilder(fence, Ingredient.of(baseBlock))
+                .group("wooden_fence")
+                .unlockedBy(getHasName(baseBlock), has(baseBlock))
+                .save(recipeOutput);
+        fenceGateBuilder(fenceGate, Ingredient.of(baseBlock))
+                .group("wooden_fence_gate")
+                .unlockedBy(getHasName(baseBlock), has(baseBlock))
+                .save(recipeOutput);
+        doorBuilder(door, Ingredient.of(baseBlock))
+                .group("wooden_door")
+                .unlockedBy(getHasName(baseBlock), has(baseBlock))
+                .save(recipeOutput);
+        trapdoorBuilder(trapdoor, Ingredient.of(baseBlock))
+                .group("wooden_trapdoor")
+                .unlockedBy(getHasName(baseBlock), has(baseBlock))
+                .save(recipeOutput);
+        pressurePlate(recipeOutput, plate, baseBlock);
+        buttonBuilder(button, Ingredient.of(baseBlock))
+                .unlockedBy(getHasName(baseBlock), has(baseBlock))
+                .save(recipeOutput);
+    }
+
+    private static void stoneBlocks(
+            RecipeOutput recipeOutput,
+            ItemLike baseBlock,
+            ItemLike stairs,
+            ItemLike slab,
+            ItemLike wall) {
+        stoneBlocks(recipeOutput, Collections.singletonList(baseBlock), stairs, slab, wall);
+    }
+
+    private static void stoneBlocks(
+            RecipeOutput recipeOutput,
+            List<ItemLike> baseBlocks,
+            ItemLike stairs,
+            ItemLike slab,
+            ItemLike wall) {
+        stair(recipeOutput, stairs, baseBlocks.getFirst());
+        slab(recipeOutput, RecipeCategory.BUILDING_BLOCKS, slab, baseBlocks.getFirst());
+        wall(recipeOutput, RecipeCategory.BUILDING_BLOCKS, wall, baseBlocks.getFirst());
+        for (ItemLike baseBlock : baseBlocks) {
+            stoneCutter(recipeOutput, stairs, baseBlock);
+            stoneCutter(recipeOutput, slab, baseBlock, 2);
+            stoneCutter(recipeOutput, wall, baseBlock);
+        }
+    }
+
+    private static void stoneCutter(
+            RecipeOutput recipeOutput, ItemLike result, List<ItemLike> materials) {
+        for (ItemLike material : materials) {
+            stoneCutter(recipeOutput, result, material, 1);
+        }
+    }
+
+    private static void stoneCutter(
+            RecipeOutput recipeOutput, ItemLike result, ItemLike material, int resultCount) {
+        SingleItemRecipeBuilder.stonecutting(
+                        Ingredient.of(material),
+                        RecipeCategory.BUILDING_BLOCKS,
+                        result,
+                        resultCount)
+                .unlockedBy(getHasName(material), has(material))
+                .save(
+                        recipeOutput,
+                        MIA.MOD_ID + ":stonecutting/" + getConversionRecipeName(result, material));
+    }
+
+    private static void stoneCutter(RecipeOutput recipeOutput, ItemLike result, ItemLike material) {
+        stoneCutter(recipeOutput, result, material, 1);
+    }
+
+    private static void stoneFromLog(
+            RecipeOutput recipeOutput, ItemLike stones, TagKey<Item> logs) {
+        stoneFromLog(recipeOutput, stones, logs, 1);
+    }
+
+    private static void stoneFromLog(
+            RecipeOutput recipeOutput, ItemLike stones, TagKey<Item> logs, int resultCount) {
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, stones, resultCount)
+                .requires(logs)
+                .unlockedBy("has_log", has(logs))
+                .save(recipeOutput);
+    }
+
+    private static void twoByTwoPacker(
+            RecipeOutput recipeOutput,
+            RecipeCategory category,
+            ItemLike packed,
+            ItemLike unpacked,
+            int count) {
+        ShapedRecipeBuilder.shaped(category, packed, count)
+                .define('#', unpacked)
+                .pattern("##")
+                .pattern("##")
+                .unlockedBy(getHasName(unpacked), has(unpacked))
+                .save(recipeOutput);
+    }
+
+    private static void pickaxe(RecipeOutput recipeOutput, ItemLike output, ItemLike input) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, output)
+                .define('#', input)
+                .define('S', Items.STICK)
+                .pattern("###")
+                .pattern(" S ")
+                .pattern(" S ")
+                .unlockedBy(getHasName(input), has(input))
+                .save(recipeOutput);
+    }
+
+    private static void hoe(RecipeOutput recipeOutput, ItemLike output, ItemLike input) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, output)
+                .define('#', input)
+                .define('S', Items.STICK)
+                .pattern("##")
+                .pattern(" S")
+                .pattern(" S")
+                .unlockedBy(getHasName(input), has(input))
+                .save(recipeOutput);
+    }
+
+    private static void shapeless2B1(
+            RecipeOutput recipeOutput,
+            RecipeCategory category,
+            ItemLike output,
+            ItemLike input,
+            ItemLike input2) {
+        shapeless2B1Builder(category, output, Ingredient.of(input), Ingredient.of(input2))
+                .unlockedBy(getHasName(input), has(input))
+                .save(recipeOutput, MIA.MOD_ID + ":" + getConversionRecipeName(output, input2));
+    }
+
+    private static void stair(RecipeOutput recipeOutput, ItemLike output, ItemLike input) {
+        stairBuilder(output, Ingredient.of(input))
+                .group("stairs")
+                .unlockedBy(getHasName(input), has(input))
+                .save(recipeOutput);
+    }
+
+    private static RecipeBuilder shapeless2B1Builder(
+            RecipeCategory category, ItemLike output, Ingredient input, Ingredient input2) {
+        return ShapelessRecipeBuilder.shapeless(category, output).requires(input).requires(input2);
     }
 
     @Override
@@ -378,301 +675,5 @@ public class MiaRecipeProvider extends RecipeProvider implements IConditionBuild
         lampTube(recipeOutput, MiaTags.Items.FOSSILIZED_LOGS, Items.COAL, "fossilized_logs");
         ArtifactBundleUpgrade(recipeOutput);
         ArtifactEnhancement(recipeOutput);
-    }
-
-    private static void ArtifactBundleUpgrade(RecipeOutput recipeOutput) {
-        ArtifactBundleUpgradeRecipeBuilder.shaped(
-                        RecipeCategory.TOOLS, MiaItems.FANCY_ARTIFACT_BUNDLE, 1)
-                .define('#', Items.IRON_INGOT)
-                .define('$', MiaItems.GRAY_ARTIFACT_BUNDLE.get())
-                .pattern("###")
-                .pattern("#$#")
-                .pattern("###")
-                .unlockedBy(
-                        getHasName(MiaItems.GRAY_ARTIFACT_BUNDLE.get()),
-                        has(MiaItems.GRAY_ARTIFACT_BUNDLE.get()))
-                .save(recipeOutput);
-    }
-
-    private static void ArtifactEnhancement(RecipeOutput recipeOutput) {
-        artifactSmithing(
-                        MiaItems.PRASIOLITE_SHARD.get(),
-                        8,
-                        Attributes.BLOCK_BREAK_SPEED,
-                        DoubleRange.between(0.1, 0.3),
-                        Operation.ADD_MULTIPLIED_TOTAL)
-                .unlockedByMaterial()
-                .save(recipeOutput);
-        artifactSmithing(
-                        Items.IRON_INGOT,
-                        2,
-                        Attributes.KNOCKBACK_RESISTANCE,
-                        DoubleRange.between(0.2, 0.4),
-                        Operation.ADD_MULTIPLIED_BASE)
-                .unlockedByMaterial()
-                .save(recipeOutput);
-        artifactSmithing(
-                        Items.COPPER_INGOT,
-                        3,
-                        Attributes.ARMOR,
-                        DoubleRange.between(0.5, 1.0),
-                        Operation.ADD_VALUE)
-                .unlockedByMaterial()
-                .save(recipeOutput);
-        artifactSmithing(
-                        Items.GOLD_INGOT,
-                        2,
-                        Attributes.ATTACK_DAMAGE,
-                        DoubleRange.between(0.1, 5.0),
-                        Operation.ADD_VALUE)
-                .unlockedByMaterial()
-                .save(recipeOutput);
-        artifactSmithing(
-                        Items.LAPIS_LAZULI,
-                        Attributes.ATTACK_SPEED,
-                        DoubleRange.between(0.5, 1.5),
-                        Operation.ADD_MULTIPLIED_BASE)
-                .unlockedByMaterial()
-                .save(recipeOutput);
-        artifactSmithing(
-                        Items.DIAMOND,
-                        Attributes.SCALE,
-                        DoubleRange.between(-0.5, 1.5),
-                        Operation.ADD_VALUE)
-                .unlockedByMaterial()
-                .save(recipeOutput);
-        artifactSmithing(
-                        Items.EMERALD,
-                        MiaAttributes.CRITICAL_HIT,
-                        DoubleRange.between(0.5, 0.9),
-                        Operation.ADD_VALUE)
-                .unlockedByMaterial()
-                .save(recipeOutput);
-        artifactSmithing(
-                        Items.NETHERITE_INGOT,
-                        Attributes.GRAVITY,
-                        DoubleRange.between(-0.5, 0.5),
-                        Operation.ADD_MULTIPLIED_BASE)
-                .unlockedByMaterial()
-                .save(recipeOutput);
-    }
-
-    private static ArtifactSmithingRecipeBuilder artifactSmithing(
-            ItemLike input, Holder<Attribute> attribute, DoubleRange value, Operation operation) {
-        return ArtifactSmithingRecipeBuilder.create(
-                Ingredient.of(MiaTags.Items.SMITHING_ARTIFACT),
-                new ItemStack(input, 1),
-                attribute,
-                value,
-                operation);
-    }
-
-    private static ArtifactSmithingRecipeBuilder artifactSmithing(
-            ItemLike input,
-            Integer count,
-            Holder<Attribute> attribute,
-            DoubleRange value,
-            Operation operation) {
-        return ArtifactSmithingRecipeBuilder.create(
-                Ingredient.of(MiaTags.Items.SMITHING_ARTIFACT),
-                new ItemStack(input, count),
-                attribute,
-                value,
-                operation);
-    }
-
-    private static void lampTube(
-            RecipeOutput recipeOutput, ItemLike input, Integer count, ItemLike output) {
-        lampTube(recipeOutput, input, count, output, 1);
-    }
-
-    private static void lampTube(
-            RecipeOutput recipeOutput,
-            ItemLike input,
-            Integer count,
-            ItemLike output,
-            Integer resultCount) {
-        LampTubeRecipeBuilder.lampTube(input, count, output, resultCount)
-                .unlockedBy(getHasName(input), has(output))
-                .save(recipeOutput);
-    }
-
-    private static void lampTube(
-            RecipeOutput recipeOutput, ItemLike input, ItemLike output, Integer count, String id) {
-        LampTubeRecipeBuilder.lampTube(input, output, count)
-                .unlockedBy(getHasName(input), has(output))
-                .save(recipeOutput, getItemName(output) + "_from_" + id);
-    }
-
-    private static void lampTube(
-            RecipeOutput recipeOutput, TagKey<Item> tag, ItemLike output, String hasName) {
-        lampTube(recipeOutput, tag, output, 1, hasName);
-    }
-
-    private static void lampTube(
-            RecipeOutput recipeOutput,
-            TagKey<Item> tag,
-            ItemLike output,
-            Integer resultCount,
-            String hasName) {
-        LampTubeRecipeBuilder.lampTube(tag, output, resultCount)
-                .unlockedBy("has_" + hasName, has(output))
-                .save(recipeOutput);
-    }
-
-    private static void woodBlocks(
-            RecipeOutput recipeOutput,
-            ItemLike baseBlock,
-            ItemLike stairs,
-            ItemLike slab,
-            ItemLike fence,
-            ItemLike fenceGate,
-            ItemLike door,
-            ItemLike trapdoor,
-            ItemLike plate,
-            ItemLike button) {
-        stair(recipeOutput, stairs, baseBlock);
-        slab(recipeOutput, RecipeCategory.BUILDING_BLOCKS, slab, baseBlock);
-        fenceBuilder(fence, Ingredient.of(baseBlock))
-                .group("wooden_fence")
-                .unlockedBy(getHasName(baseBlock), has(baseBlock))
-                .save(recipeOutput);
-        fenceGateBuilder(fenceGate, Ingredient.of(baseBlock))
-                .group("wooden_fence_gate")
-                .unlockedBy(getHasName(baseBlock), has(baseBlock))
-                .save(recipeOutput);
-        doorBuilder(door, Ingredient.of(baseBlock))
-                .group("wooden_door")
-                .unlockedBy(getHasName(baseBlock), has(baseBlock))
-                .save(recipeOutput);
-        trapdoorBuilder(trapdoor, Ingredient.of(baseBlock))
-                .group("wooden_trapdoor")
-                .unlockedBy(getHasName(baseBlock), has(baseBlock))
-                .save(recipeOutput);
-        pressurePlate(recipeOutput, plate, baseBlock);
-        buttonBuilder(button, Ingredient.of(baseBlock))
-                .unlockedBy(getHasName(baseBlock), has(baseBlock))
-                .save(recipeOutput);
-    }
-
-    private static void stoneBlocks(
-            RecipeOutput recipeOutput,
-            ItemLike baseBlock,
-            ItemLike stairs,
-            ItemLike slab,
-            ItemLike wall) {
-        stoneBlocks(recipeOutput, Collections.singletonList(baseBlock), stairs, slab, wall);
-    }
-
-    private static void stoneBlocks(
-            RecipeOutput recipeOutput,
-            List<ItemLike> baseBlocks,
-            ItemLike stairs,
-            ItemLike slab,
-            ItemLike wall) {
-        stair(recipeOutput, stairs, baseBlocks.getFirst());
-        slab(recipeOutput, RecipeCategory.BUILDING_BLOCKS, slab, baseBlocks.getFirst());
-        wall(recipeOutput, RecipeCategory.BUILDING_BLOCKS, wall, baseBlocks.getFirst());
-        for (ItemLike baseBlock : baseBlocks) {
-            stoneCutter(recipeOutput, stairs, baseBlock);
-            stoneCutter(recipeOutput, slab, baseBlock, 2);
-            stoneCutter(recipeOutput, wall, baseBlock);
-        }
-    }
-
-    private static void stoneCutter(
-            RecipeOutput recipeOutput, ItemLike result, List<ItemLike> materials) {
-        for (ItemLike material : materials) {
-            stoneCutter(recipeOutput, result, material, 1);
-        }
-    }
-
-    private static void stoneCutter(RecipeOutput recipeOutput, ItemLike result, ItemLike material) {
-        stoneCutter(recipeOutput, result, material, 1);
-    }
-
-    private static void stoneCutter(
-            RecipeOutput recipeOutput, ItemLike result, ItemLike material, int resultCount) {
-        SingleItemRecipeBuilder.stonecutting(
-                        Ingredient.of(material),
-                        RecipeCategory.BUILDING_BLOCKS,
-                        result,
-                        resultCount)
-                .unlockedBy(getHasName(material), has(material))
-                .save(
-                        recipeOutput,
-                        MIA.MOD_ID + ":stonecutting/" + getConversionRecipeName(result, material));
-    }
-
-    private static void stoneFromLog(
-            RecipeOutput recipeOutput, ItemLike stones, TagKey<Item> logs) {
-        stoneFromLog(recipeOutput, stones, logs, 1);
-    }
-
-    private static void stoneFromLog(
-            RecipeOutput recipeOutput, ItemLike stones, TagKey<Item> logs, int resultCount) {
-        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, stones, resultCount)
-                .requires(logs)
-                .unlockedBy("has_log", has(logs))
-                .save(recipeOutput);
-    }
-
-    private static void pickaxe(RecipeOutput recipeOutput, ItemLike output, ItemLike input) {
-        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, output)
-                .define('#', input)
-                .define('S', Items.STICK)
-                .pattern("###")
-                .pattern(" S ")
-                .pattern(" S ")
-                .unlockedBy(getHasName(input), has(input))
-                .save(recipeOutput);
-    }
-
-    private static void hoe(RecipeOutput recipeOutput, ItemLike output, ItemLike input) {
-        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, output)
-                .define('#', input)
-                .define('S', Items.STICK)
-                .pattern("##")
-                .pattern(" S")
-                .pattern(" S")
-                .unlockedBy(getHasName(input), has(input))
-                .save(recipeOutput);
-    }
-
-    private static void twoByTwoPacker(
-            RecipeOutput recipeOutput,
-            RecipeCategory category,
-            ItemLike packed,
-            ItemLike unpacked,
-            int count) {
-        ShapedRecipeBuilder.shaped(category, packed, count)
-                .define('#', unpacked)
-                .pattern("##")
-                .pattern("##")
-                .unlockedBy(getHasName(unpacked), has(unpacked))
-                .save(recipeOutput);
-    }
-
-    private static void stair(RecipeOutput recipeOutput, ItemLike output, ItemLike input) {
-        stairBuilder(output, Ingredient.of(input))
-                .group("stairs")
-                .unlockedBy(getHasName(input), has(input))
-                .save(recipeOutput);
-    }
-
-    private static void shapeless2B1(
-            RecipeOutput recipeOutput,
-            RecipeCategory category,
-            ItemLike output,
-            ItemLike input,
-            ItemLike input2) {
-        shapeless2B1Builder(category, output, Ingredient.of(input), Ingredient.of(input2))
-                .unlockedBy(getHasName(input), has(input))
-                .save(recipeOutput, MIA.MOD_ID + ":" + getConversionRecipeName(output, input2));
-    }
-
-    private static RecipeBuilder shapeless2B1Builder(
-            RecipeCategory category, ItemLike output, Ingredient input, Ingredient input2) {
-        return ShapelessRecipeBuilder.shapeless(category, output).requires(input).requires(input2);
     }
 }

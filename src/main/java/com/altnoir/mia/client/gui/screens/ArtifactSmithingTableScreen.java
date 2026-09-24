@@ -4,8 +4,6 @@ import com.altnoir.mia.common.inventory.ArtifactSmithingTableMenu;
 import com.altnoir.mia.common.recipe.ArtifactSmithingRecipe;
 import com.altnoir.mia.core.event.client.ClientTooltipEvent;
 import com.altnoir.mia.util.MiaUtil;
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -18,6 +16,9 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ArtifactSmithingTableScreen
         extends AbstractContainerScreen<ArtifactSmithingTableMenu> {
@@ -99,7 +100,7 @@ public class ArtifactSmithingTableScreen
         // render recipes
         this.renderRecipes(guiGraphics, l, i1, j1);
         // render text
-        var recipe = ((ArtifactSmithingTableMenu) this.menu).getSelectedRecipe();
+        var recipe = this.menu.getSelectedRecipe();
         if (recipe != null) {
             double min = recipe.value().getMinAttributeValue();
             double max = recipe.value().getMaxAttributeValue();
@@ -127,9 +128,9 @@ public class ArtifactSmithingTableScreen
             int y,
             int lastVisibleElementIndex) {
         int availableRecipeCount =
-                ((ArtifactSmithingTableMenu) this.menu).getAvailableRecipes().size();
+                this.menu.getAvailableRecipes().size();
         int unavailableRecipeCount =
-                ((ArtifactSmithingTableMenu) this.menu).getUnavailableRecipes().size();
+                this.menu.getUnavailableRecipes().size();
         for (int i = this.startIndex;
                 i < lastVisibleElementIndex && i < availableRecipeCount + unavailableRecipeCount;
                 ++i) {
@@ -139,7 +140,7 @@ public class ArtifactSmithingTableScreen
             int i1 = y + l * RECIPES_IMAGE_SIZE_HEIGHT + 2;
             ResourceLocation resourcelocation;
 
-            if (i == ((ArtifactSmithingTableMenu) this.menu).getSelectedRecipeIndex()) {
+            if (i == this.menu.getSelectedRecipeIndex()) {
                 // MIA.LOGGER.debug("selected " + i);
 
                 resourcelocation = RECIPE_SELECTED_SPRITE;
@@ -167,9 +168,9 @@ public class ArtifactSmithingTableScreen
 
     private void renderRecipes(GuiGraphics guiGraphics, int x, int y, int startIndex) {
         List<RecipeHolder<ArtifactSmithingRecipe>> availableRecipes =
-                ((ArtifactSmithingTableMenu) this.menu).getAvailableRecipes();
+                this.menu.getAvailableRecipes();
         List<RecipeHolder<ArtifactSmithingRecipe>> unavailableRecipes =
-                ((ArtifactSmithingTableMenu) this.menu).getUnavailableRecipes();
+                this.menu.getUnavailableRecipes();
 
         for (int i = this.startIndex;
                 i < startIndex && i < (availableRecipes.size() + unavailableRecipes.size());
@@ -209,11 +210,11 @@ public class ArtifactSmithingTableScreen
             int j = this.topPos + RECIPES_Y;
             int k = this.startIndex + RECIPES_COLUMNS * RECIPES_ROWS;
             List<RecipeHolder<ArtifactSmithingRecipe>> list = new ArrayList<>();
-            list.addAll(((ArtifactSmithingTableMenu) this.menu).getAvailableRecipes());
-            list.addAll(((ArtifactSmithingTableMenu) this.menu).getUnavailableRecipes());
+            list.addAll(this.menu.getAvailableRecipes());
+            list.addAll(this.menu.getUnavailableRecipes());
 
             for (int l = this.startIndex;
-                    l < k && l < ((ArtifactSmithingTableMenu) this.menu).getNumRecipes();
+                    l < k && l < this.menu.getNumRecipes();
                     ++l) {
                 int i1 = l - this.startIndex;
                 int j1 = i + i1 % RECIPES_COLUMNS * RECIPES_IMAGE_SIZE_WIDTH;
@@ -257,7 +258,7 @@ public class ArtifactSmithingTableScreen
                         && d1 >= 0.0
                         && d0 < (double) RECIPES_IMAGE_SIZE_WIDTH
                         && d1 < (double) RECIPES_IMAGE_SIZE_HEIGHT
-                        && ((ArtifactSmithingTableMenu) this.menu)
+                        && this.menu
                                 .clickMenuButton(this.minecraft.player, l)) {
                     // play sound
                     Minecraft.getInstance()
@@ -266,7 +267,7 @@ public class ArtifactSmithingTableScreen
                                     SimpleSoundInstance.forUI(
                                             SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
                     this.minecraft.gameMode.handleInventoryButtonClick(
-                            ((ArtifactSmithingTableMenu) this.menu).containerId, l);
+                            this.menu.containerId, l);
                     return true;
                 }
             }
@@ -316,18 +317,18 @@ public class ArtifactSmithingTableScreen
 
     private boolean isScrollBarActive() {
         return this.displayRecipes
-                && ((ArtifactSmithingTableMenu) this.menu).getNumRecipes()
+                && this.menu.getNumRecipes()
                         > RECIPES_COLUMNS * RECIPES_ROWS;
     }
 
     protected int getOffscreenRows() {
-        return (((ArtifactSmithingTableMenu) this.menu).getNumRecipes() + RECIPES_COLUMNS - 1)
+        return (this.menu.getNumRecipes() + RECIPES_COLUMNS - 1)
                         / RECIPES_COLUMNS
                 - RECIPES_ROWS;
     }
 
     private void containerChanged() {
-        this.displayRecipes = ((ArtifactSmithingTableMenu) this.menu).inputHasSmithingRecipe();
+        this.displayRecipes = this.menu.inputHasSmithingRecipe();
         if (!this.displayRecipes) {
             this.scrollOffs = 0.0F;
             this.startIndex = 0;

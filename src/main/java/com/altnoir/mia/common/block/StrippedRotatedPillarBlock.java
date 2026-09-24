@@ -2,8 +2,6 @@ package com.altnoir.mia.common.block;
 
 import com.altnoir.mia.init.MiaBlocks;
 import com.google.common.collect.ImmutableMap;
-import java.util.Map;
-import java.util.function.Supplier;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.Block;
@@ -11,6 +9,9 @@ import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.ItemAbility;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class StrippedRotatedPillarBlock extends RotatedPillarBlock {
     private static Supplier<Map<Block, Block>> STRIPPABLES = null;

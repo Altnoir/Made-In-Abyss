@@ -50,8 +50,6 @@ public abstract class InvertedBushBlock extends Block {
 
     @Override
     protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
-        return pathComputationType == PathComputationType.AIR && !this.hasCollision
-                ? true
-                : super.isPathfindable(state, pathComputationType);
+        return pathComputationType == PathComputationType.AIR && !this.hasCollision || super.isPathfindable(state, pathComputationType);
     }
 }

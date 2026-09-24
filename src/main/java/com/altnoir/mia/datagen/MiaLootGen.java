@@ -1,7 +1,6 @@
 package com.altnoir.mia.datagen;
 
 import com.altnoir.abysslib.reginth.providers.loot.ReginthBlockLootTables;
-import java.util.List;
 import net.minecraft.advancements.critereon.*;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
@@ -17,7 +16,6 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
-import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
@@ -26,6 +24,8 @@ import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCon
 import net.minecraft.world.level.storage.loot.predicates.MatchTool;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
+
+import java.util.List;
 
 /**
  * MIA 的自定义战利品表 helper（Reginth 版）。
@@ -135,15 +135,14 @@ public final class MiaLootGen {
     public static LootTable.Builder abyssGrassDrops(ReginthBlockLootTables tables, Block block) {
         return tables.createShearsDispatchTable(
                 block,
-                (LootPoolEntryContainer.Builder<?>)
-                        tables.applyExplosionDecay(
-                                block,
-                                LootItem.lootTableItem(Items.WHEAT_SEEDS)
-                                        .when(LootItemRandomChanceCondition.randomChance(0.125F))
-                                        .apply(
-                                                ApplyBonusCount.addUniformBonusCount(
-                                                        enchantment(tables, Enchantments.FORTUNE),
-                                                        2))));
+                tables.applyExplosionDecay(
+                        block,
+                        LootItem.lootTableItem(Items.WHEAT_SEEDS)
+                                .when(LootItemRandomChanceCondition.randomChance(0.125F))
+                                .apply(
+                                        ApplyBonusCount.addUniformBonusCount(
+                                                enchantment(tables, Enchantments.FORTUNE),
+                                                2))));
     }
 
     /**

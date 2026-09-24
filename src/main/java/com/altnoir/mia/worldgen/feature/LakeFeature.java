@@ -158,7 +158,7 @@ public class LakeFeature extends Feature<LakeFeature.Configuration> {
         return !state.is(BlockTags.FEATURES_CANNOT_REPLACE);
     }
 
-    public static record Configuration(BlockStateProvider fluid, BlockStateProvider barrier)
+    public record Configuration(BlockStateProvider fluid, BlockStateProvider barrier)
             implements FeatureConfiguration {
         public static final Codec<LakeFeature.Configuration> CODEC =
                 RecordCodecBuilder.create(

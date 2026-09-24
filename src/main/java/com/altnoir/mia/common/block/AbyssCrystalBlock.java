@@ -3,7 +3,6 @@ package com.altnoir.mia.common.block;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -21,6 +20,8 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+
+import javax.annotation.Nullable;
 
 public class AbyssCrystalBlock extends CrystalBlock implements SimpleWaterloggedBlock {
     public static final MapCodec<AbyssCrystalBlock> CODEC =
@@ -60,52 +61,52 @@ public class AbyssCrystalBlock extends CrystalBlock implements SimpleWaterlogged
 
         this.upAabb =
                 Block.box(
-                        (double) aabbOffset,
+                        aabbOffset,
                         0.0,
-                        (double) aabbOffset,
-                        (double) (16.0F - aabbOffset),
-                        (double) height,
-                        (double) (16.0F - aabbOffset));
+                        aabbOffset,
+                        16.0F - aabbOffset,
+                        height,
+                        16.0F - aabbOffset);
         this.downAabb =
                 Block.box(
-                        (double) aabbOffset,
-                        (double) (16.0F - height),
-                        (double) aabbOffset,
-                        (double) (16.0F - aabbOffset),
+                        aabbOffset,
+                        16.0F - height,
+                        aabbOffset,
+                        16.0F - aabbOffset,
                         16.0,
-                        (double) (16.0F - aabbOffset));
+                        16.0F - aabbOffset);
         this.northAabb =
                 Block.box(
-                        (double) aabbOffset,
-                        (double) aabbOffset,
-                        (double) (16.0F - height),
-                        (double) (16.0F - aabbOffset),
-                        (double) (16.0F - aabbOffset),
+                        aabbOffset,
+                        aabbOffset,
+                        16.0F - height,
+                        16.0F - aabbOffset,
+                        16.0F - aabbOffset,
                         16.0);
         this.southAabb =
                 Block.box(
-                        (double) aabbOffset,
-                        (double) aabbOffset,
+                        aabbOffset,
+                        aabbOffset,
                         0.0,
-                        (double) (16.0F - aabbOffset),
-                        (double) (16.0F - aabbOffset),
-                        (double) height);
+                        16.0F - aabbOffset,
+                        16.0F - aabbOffset,
+                        height);
         this.eastAabb =
                 Block.box(
                         0.0,
-                        (double) aabbOffset,
-                        (double) aabbOffset,
-                        (double) height,
-                        (double) (16.0F - aabbOffset),
-                        (double) (16.0F - aabbOffset));
+                        aabbOffset,
+                        aabbOffset,
+                        height,
+                        16.0F - aabbOffset,
+                        16.0F - aabbOffset);
         this.westAabb =
                 Block.box(
-                        (double) (16.0F - height),
-                        (double) aabbOffset,
-                        (double) aabbOffset,
+                        16.0F - height,
+                        aabbOffset,
+                        aabbOffset,
                         16.0,
-                        (double) (16.0F - aabbOffset),
-                        (double) (16.0F - aabbOffset));
+                        16.0F - aabbOffset,
+                        16.0F - aabbOffset);
 
         this.height = height;
         this.aabbOffset = aabbOffset;

@@ -6,7 +6,11 @@ import net.minecraft.util.valueproviders.FloatProvider;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 
-public class MiaCavePillarConfiguration implements FeatureConfiguration {
+public record MiaCavePillarConfiguration(int floorToCeilingSearchRange, IntProvider columnRadius,
+                                         FloatProvider heightScale, float maxColumnRadiusToCaveHeightRatio,
+                                         FloatProvider stalactiteBluntness, FloatProvider stalagmiteBluntness,
+                                         FloatProvider windSpeed, int minRadiusForWind,
+                                         float minBluntnessForWind) implements FeatureConfiguration {
     public static final Codec<MiaCavePillarConfiguration> CODEC =
             RecordCodecBuilder.create(
                     p_160966_ ->
@@ -56,34 +60,4 @@ public class MiaCavePillarConfiguration implements FeatureConfiguration {
                                                             p_160968_ ->
                                                                     p_160968_.minBluntnessForWind))
                                     .apply(p_160966_, MiaCavePillarConfiguration::new));
-    public final int floorToCeilingSearchRange;
-    public final IntProvider columnRadius;
-    public final FloatProvider heightScale;
-    public final float maxColumnRadiusToCaveHeightRatio;
-    public final FloatProvider stalactiteBluntness;
-    public final FloatProvider stalagmiteBluntness;
-    public final FloatProvider windSpeed;
-    public final int minRadiusForWind;
-    public final float minBluntnessForWind;
-
-    public MiaCavePillarConfiguration(
-            int floorToCeilingSearchRange,
-            IntProvider columnRadius,
-            FloatProvider heightScale,
-            float maxColumnRadiusToCaveHeightRatio,
-            FloatProvider stalactiteBluntness,
-            FloatProvider stalagmiteBluntness,
-            FloatProvider windSpeed,
-            int minRadiusForWind,
-            float minBluntnessForWind) {
-        this.floorToCeilingSearchRange = floorToCeilingSearchRange;
-        this.columnRadius = columnRadius;
-        this.heightScale = heightScale;
-        this.maxColumnRadiusToCaveHeightRatio = maxColumnRadiusToCaveHeightRatio;
-        this.stalactiteBluntness = stalactiteBluntness;
-        this.stalagmiteBluntness = stalagmiteBluntness;
-        this.windSpeed = windSpeed;
-        this.minRadiusForWind = minRadiusForWind;
-        this.minBluntnessForWind = minBluntnessForWind;
-    }
 }

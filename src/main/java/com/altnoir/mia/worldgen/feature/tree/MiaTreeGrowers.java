@@ -1,8 +1,9 @@
 package com.altnoir.mia.worldgen.feature.tree;
 
 import com.altnoir.mia.MIA;
-import java.util.Optional;
 import net.minecraft.world.level.block.grower.TreeGrower;
+
+import java.util.Optional;
 
 public class MiaTreeGrowers {
     public static final TreeGrower SKYFOG_TREE =

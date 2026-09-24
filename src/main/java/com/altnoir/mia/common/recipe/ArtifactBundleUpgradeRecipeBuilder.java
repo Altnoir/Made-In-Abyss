@@ -3,11 +3,6 @@ package com.altnoir.mia.common.recipe;
 import com.altnoir.mia.MIA;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import javax.annotation.Nullable;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementRequirements;
 import net.minecraft.advancements.AdvancementRewards;
@@ -24,6 +19,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.minecraft.world.level.ItemLike;
+
+import javax.annotation.Nullable;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class ArtifactBundleUpgradeRecipeBuilder {
     private final RecipeCategory category;
@@ -68,24 +69,18 @@ public class ArtifactBundleUpgradeRecipeBuilder {
         return this.define(symbol, Ingredient.of(tag));
     }
 
-    public ArtifactBundleUpgradeRecipeBuilder define(Character symbol, ItemLike item) {
-        return this.define(symbol, Ingredient.of(new ItemLike[] {item}));
+    public static ResourceLocation getDefaultRecipeId(ItemLike itemLike) {
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(itemLike.asItem());
+        return ResourceLocation.fromNamespaceAndPath(
+                MIA.MOD_ID, "bundle_upgrade/" + itemId.getPath());
     }
 
-    public ArtifactBundleUpgradeRecipeBuilder define(Character symbol, Ingredient ingredient) {
-        if (this.key.containsKey(symbol)) {
-            throw new IllegalArgumentException("Symbol '" + symbol + "' is already defined!");
-        } else if (symbol == ' ') {
-            throw new IllegalArgumentException(
-                    "Symbol ' ' (whitespace) is reserved and cannot be defined");
-        } else {
-            this.key.put(symbol, ingredient);
-            return this;
-        }
+    public ArtifactBundleUpgradeRecipeBuilder define(Character symbol, ItemLike item) {
+        return this.define(symbol, Ingredient.of(item));
     }
 
     public ArtifactBundleUpgradeRecipeBuilder pattern(String pattern) {
-        if (!this.rows.isEmpty() && pattern.length() != ((String) this.rows.get(0)).length()) {
+        if (!this.rows.isEmpty() && pattern.length() != this.rows.get(0).length()) {
             throw new IllegalArgumentException("Pattern must be the same width on every line!");
         } else {
             this.rows.add(pattern);
@@ -116,6 +111,18 @@ public class ArtifactBundleUpgradeRecipeBuilder {
         this.save(recipeOutput, getDefaultRecipeId(this.getResult()));
     }
 
+    public ArtifactBundleUpgradeRecipeBuilder define(Character symbol, Ingredient ingredient) {
+        if (this.key.containsKey(symbol)) {
+            throw new IllegalArgumentException("Symbol '" + symbol + "' is already defined!");
+        } else if (symbol == ' ') {
+            throw new IllegalArgumentException(
+                    "Symbol ' ' (whitespace) is reserved and cannot be defined");
+        } else {
+            this.key.put(symbol, ingredient);
+            return this;
+        }
+    }
+
     public void save(RecipeOutput recipeOutput, ResourceLocation id) {
         ShapedRecipePattern shapedrecipepattern = this.ensureValid(id);
 
@@ -134,7 +141,7 @@ public class ArtifactBundleUpgradeRecipeBuilder {
 
         ArtifactBundleUpgradeRecipe shapedrecipe =
                 new ArtifactBundleUpgradeRecipe(
-                        (String) Objects.requireNonNullElse(this.group, ""),
+                        Objects.requireNonNullElse(this.group, ""),
                         RecipeBuilder.determineBookCategory(this.category),
                         shapedrecipepattern,
                         this.resultStack,
@@ -144,16 +151,10 @@ public class ArtifactBundleUpgradeRecipeBuilder {
                 id, shapedrecipe, advancementBuilder.build(advancementId.withPrefix("recipes/")));
     }
 
-    public static ResourceLocation getDefaultRecipeId(ItemLike itemLike) {
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(itemLike.asItem());
-        return ResourceLocation.fromNamespaceAndPath(
-                MIA.MOD_ID, "bundle_upgrade/" + itemId.getPath());
-    }
-
     private ShapedRecipePattern ensureValid(ResourceLocation loaction) {
         if (this.criteria.isEmpty()) {
             throw new IllegalStateException(
-                    "No way of obtaining recipe " + String.valueOf(loaction));
+                    "No way of obtaining recipe " + loaction);
         } else {
             return ShapedRecipePattern.of(this.key, this.rows);
         }

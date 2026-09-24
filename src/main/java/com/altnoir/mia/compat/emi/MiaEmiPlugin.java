@@ -11,13 +11,14 @@ import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.render.EmiTexture;
 import dev.emi.emi.api.stack.EmiStack;
-import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeType;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 @EmiEntrypoint
 @MethodsReturnNonnullByDefault
@@ -31,6 +32,11 @@ public class MiaEmiPlugin implements EmiPlugin {
                     WORKSTATION,
                     new EmiTexture(WIDGETS, 160, 240, 16, 16));
 
+    private static <C extends RecipeInput, T extends Recipe<C>>
+            Iterable<RecipeHolder<T>> getRecipes(EmiRegistry registry, RecipeType<T> type) {
+        return registry.getRecipeManager().getAllRecipesFor(type);
+    }
+
     @Override
     public void register(EmiRegistry registry) {
         registry.addCategory(LAMP_TUBE);
@@ -40,11 +46,6 @@ public class MiaEmiPlugin implements EmiPlugin {
                 getRecipes(registry, MiaRecipes.LAMP_TUBE_TYPE.get())) {
             registry.addRecipe(new LampTubeEmiRecipe(recipe));
         }
-    }
-
-    private static <C extends RecipeInput, T extends Recipe<C>>
-            Iterable<RecipeHolder<T>> getRecipes(EmiRegistry registry, RecipeType<T> type) {
-        return registry.getRecipeManager().getAllRecipesFor(type);
     }
     /*private static <C extends RecipeInput, T extends Recipe<C>> Iterable<T> getRecipes(EmiRegistry registry, RecipeType<T> type) {
         return registry.getRecipeManager().getAllRecipesFor(type).stream().map(RecipeHolder::value)::iterator;

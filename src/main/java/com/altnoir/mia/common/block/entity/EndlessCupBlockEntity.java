@@ -45,9 +45,10 @@ public class EndlessCupBlockEntity extends BlockEntity {
         this.fluidTank.writeToNBT(registries, tag);
     }
 
-    @Nullable @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
+    public static void tick(
+            Level level, BlockPos pos, BlockState state, EndlessCupBlockEntity blockEntity) {
+        blockEntity.fluidTank.fill(
+                new FluidStack(Fluids.WATER, Integer.MAX_VALUE), IFluidHandler.FluidAction.EXECUTE);
     }
 
     @Override
@@ -55,9 +56,8 @@ public class EndlessCupBlockEntity extends BlockEntity {
         return saveWithoutMetadata(registries);
     }
 
-    public static void tick(
-            Level level, BlockPos pos, BlockState state, EndlessCupBlockEntity blockEntity) {
-        blockEntity.fluidTank.fill(
-                new FluidStack(Fluids.WATER, Integer.MAX_VALUE), IFluidHandler.FluidAction.EXECUTE);
+    @Nullable @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 }

@@ -8,6 +8,36 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
 public class MiaRenderType extends RenderType {
+    public static final RenderType ABYSS_ORB =
+            create(
+                    "mia_abyss_orb",
+                    DefaultVertexFormat.POSITION_COLOR_LIGHTMAP,
+                    VertexFormat.Mode.TRIANGLES,
+                    1536,
+                    false,
+                    true,
+                    CompositeState.builder()
+                            .setShaderState(POSITION_COLOR_LIGHTMAP_SHADER)
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setWriteMaskState(COLOR_DEPTH_WRITE)
+                            .setCullState(NO_CULL)
+                            .setDepthTestState(LEQUAL_DEPTH_TEST)
+                            .createCompositeState(false));
+    public static final RenderType ABYSS_ORB_GLOW =
+            create(
+                    "mia_abyss_orb_glow",
+                    DefaultVertexFormat.POSITION_COLOR_LIGHTMAP,
+                    VertexFormat.Mode.TRIANGLES,
+                    1536,
+                    false,
+                    true,
+                    CompositeState.builder()
+                            .setShaderState(POSITION_COLOR_LIGHTMAP_SHADER)
+                            .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                            .setWriteMaskState(COLOR_WRITE)
+                            .setCullState(NO_CULL)
+                            .setDepthTestState(LEQUAL_DEPTH_TEST)
+                            .createCompositeState(false));
     protected static final ResourceLocation CLOUDS_LOCATION =
             MiaUtil.miaId("textures/environment/clouds.png");
 
@@ -30,38 +60,6 @@ public class MiaRenderType extends RenderType {
                 setupState,
                 clearState);
     }
-
-    public static final RenderType ABYSS_ORB =
-            create(
-                    "mia_abyss_orb",
-                    DefaultVertexFormat.POSITION_COLOR_LIGHTMAP,
-                    VertexFormat.Mode.TRIANGLES,
-                    1536,
-                    false,
-                    true,
-                    CompositeState.builder()
-                            .setShaderState(POSITION_COLOR_LIGHTMAP_SHADER)
-                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                            .setWriteMaskState(COLOR_DEPTH_WRITE)
-                            .setCullState(NO_CULL)
-                            .setDepthTestState(LEQUAL_DEPTH_TEST)
-                            .createCompositeState(false));
-
-    public static final RenderType ABYSS_ORB_GLOW =
-            create(
-                    "mia_abyss_orb_glow",
-                    DefaultVertexFormat.POSITION_COLOR_LIGHTMAP,
-                    VertexFormat.Mode.TRIANGLES,
-                    1536,
-                    false,
-                    true,
-                    CompositeState.builder()
-                            .setShaderState(POSITION_COLOR_LIGHTMAP_SHADER)
-                            .setTransparencyState(ADDITIVE_TRANSPARENCY)
-                            .setWriteMaskState(COLOR_WRITE)
-                            .setCullState(NO_CULL)
-                            .setDepthTestState(LEQUAL_DEPTH_TEST)
-                            .createCompositeState(false));
     public static final RenderType ABYSS_CLOUDS = createClouds(false);
     public static final RenderType ABYSS_CLOUDS_DEPTH_ONLY = createClouds(true);
 

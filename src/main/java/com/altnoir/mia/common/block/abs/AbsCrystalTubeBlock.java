@@ -1,6 +1,5 @@
 package com.altnoir.mia.common.block.abs;
 
-import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -18,6 +17,8 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
 import org.joml.Vector3f;
+
+import java.util.Objects;
 
 public abstract class AbsCrystalTubeBlock extends AbsTubeBlock {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;

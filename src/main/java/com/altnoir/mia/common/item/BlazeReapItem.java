@@ -2,10 +2,6 @@ package com.altnoir.mia.common.item;
 
 import com.altnoir.mia.MiaConfig;
 import com.altnoir.mia.init.MiaItems;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -20,12 +16,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.Level.ExplosionInteraction;
 import net.minecraft.world.phys.Vec3;
 
-public class BlazeReapItem extends DiggerItem {
-    private static final ScheduledExecutorService SCHEDULER =
-            Executors.newSingleThreadScheduledExecutor();
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
+public class BlazeReapItem extends DiggerItem {
     public static final Predicate<ItemStack> BLAZE_REAP_FUEL =
             (stack) -> stack.is(Items.GUNPOWDER) || stack.is(MiaItems.PEACE_PHOBIA.get());
+    private static final ScheduledExecutorService SCHEDULER =
+            Executors.newSingleThreadScheduledExecutor();
 
     public BlazeReapItem(Properties properties) {
         super(Tiers.NETHERITE, BlockTags.MINEABLE_WITH_PICKAXE, properties);

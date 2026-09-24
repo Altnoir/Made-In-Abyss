@@ -618,9 +618,9 @@ public class MiaDensityFunctions {
         return DensityFunctions.interpolated(
                 DensityFunctions.rangeChoice(
                         input,
-                        (double) minY,
-                        (double) maxY,
+                        minY,
+                        maxY,
                         whenInRange,
-                        DensityFunctions.constant((double) whenOutOfRange)));
+                        DensityFunctions.constant(whenOutOfRange)));
     }
 }

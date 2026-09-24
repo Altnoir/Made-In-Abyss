@@ -4,7 +4,6 @@ import com.altnoir.mia.worldgen.MiaSructurePoolUtils;
 import com.altnoir.mia.worldgen.processor_list.MiaProcessorLists;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
-import java.util.List;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
@@ -13,6 +12,8 @@ import net.minecraft.data.worldgen.Pools;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
+
+import java.util.List;
 
 public class AbyssStrongholdPools {
     public static final ResourceKey<StructureTemplatePool> START =

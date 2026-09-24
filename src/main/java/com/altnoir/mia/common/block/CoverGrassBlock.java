@@ -5,8 +5,6 @@ import com.altnoir.mia.init.MiaBlocks;
 import com.altnoir.mia.worldgen.biome.the_abyss.TheAbyssPlacements;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import java.util.List;
-import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -21,6 +19,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.RandomPatchConfiguration;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+
+import java.util.List;
+import java.util.Optional;
 
 public class CoverGrassBlock extends AbsCoverGrassBlock implements BonemealableBlock {
     public static final MapCodec<CoverGrassBlock> CODEC =

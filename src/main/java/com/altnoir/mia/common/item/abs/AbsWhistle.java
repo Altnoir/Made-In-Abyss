@@ -1,8 +1,6 @@
 package com.altnoir.mia.common.item.abs;
 
 import com.altnoir.mia.MIA;
-import java.util.List;
-import java.util.Optional;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -12,6 +10,9 @@ import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
+
+import java.util.List;
+import java.util.Optional;
 
 public abstract class AbsWhistle extends Item implements ICurioItem, IMiaTooltip {
 

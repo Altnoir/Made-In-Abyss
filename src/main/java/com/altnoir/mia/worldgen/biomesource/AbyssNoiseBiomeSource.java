@@ -4,9 +4,6 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
@@ -19,17 +16,19 @@ import net.minecraft.world.level.biome.OverworldBiomeBuilder;
 import net.minecraft.world.level.levelgen.NoiseRouterData;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 public class AbyssNoiseBiomeSource extends BiomeSource {
     private static final MapCodec<Long> RADIUS_CODEC = Codec.LONG.fieldOf("abyss_radius");
     private static final MapCodec<Holder<Biome>> ENTRY_CODEC = Biome.CODEC.fieldOf("biome");
     private static final MapCodec<Climate.ParameterList<Holder<Biome>>> DIRECT_CODEC =
             Climate.ParameterList.codec(ENTRY_CODEC).fieldOf("biomes");
-    private static final MapCodec<Optional<Climate.ParameterList<Holder<Biome>>>>
-            ABYSS_DIRECT_CODEC =
-                    Climate.ParameterList.codec(ENTRY_CODEC).optionalFieldOf("abyss_biomes");
+    private static final MapCodec<Optional<Climate.ParameterList<Holder<Biome>>>> ABYSS_DIRECT_CODEC =
+            Climate.ParameterList.codec(ENTRY_CODEC).optionalFieldOf("abyss_biomes");
     private static final MapCodec<Optional<Holder<Biome>>> ABYSS_CODEC =
             Biome.CODEC.optionalFieldOf("abyss_biome");
-
     public static final MapCodec<AbyssNoiseBiomeSource> CODEC =
             RecordCodecBuilder.mapCodec(
                     instance ->
@@ -188,18 +187,18 @@ public class AbyssNoiseBiomeSource extends BiomeSource {
         float f2 = Climate.unquantizeCoord(climate$targetpoint.temperature());
         float f3 = Climate.unquantizeCoord(climate$targetpoint.humidity());
         float f4 = Climate.unquantizeCoord(climate$targetpoint.weirdness());
-        double d0 = (double) NoiseRouterData.peaksAndValleys(f4);
+        double d0 = NoiseRouterData.peaksAndValleys(f4);
         OverworldBiomeBuilder overworldbiomebuilder = new OverworldBiomeBuilder();
         info.add(
                 "Biome builder PV: "
                         + OverworldBiomeBuilder.getDebugStringForPeaksAndValleys(d0)
                         + " C: "
-                        + overworldbiomebuilder.getDebugStringForContinentalness((double) f)
+                        + overworldbiomebuilder.getDebugStringForContinentalness(f)
                         + " E: "
-                        + overworldbiomebuilder.getDebugStringForErosion((double) f1)
+                        + overworldbiomebuilder.getDebugStringForErosion(f1)
                         + " T: "
-                        + overworldbiomebuilder.getDebugStringForTemperature((double) f2)
+                        + overworldbiomebuilder.getDebugStringForTemperature(f2)
                         + " H: "
-                        + overworldbiomebuilder.getDebugStringForHumidity((double) f3));
+                        + overworldbiomebuilder.getDebugStringForHumidity(f3));
     }
 }

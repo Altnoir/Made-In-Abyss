@@ -11,7 +11,6 @@ import com.altnoir.mia.datagen.BlockStateGen;
 import com.altnoir.mia.datagen.MiaLootGen;
 import com.altnoir.mia.worldgen.feature.tree.MiaTreeFeatures;
 import com.altnoir.mia.worldgen.feature.tree.MiaTreeGrowers;
-import java.util.function.ToIntFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -30,6 +29,8 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.storage.loot.LootTable;
 
+import java.util.function.ToIntFunction;
+
 public class MiaBlocks {
 
     /**
@@ -40,18 +41,6 @@ public class MiaBlocks {
      * 所以这里的 datagen（blockstate / 模型 / 战利品表 / 语言键）会自动生效。
      */
     private static final Reginth REGINTH = MIA.registrate();
-
-    /**
-     * 强制初始化本类。
-     * <p>
-     * <b>为什么需要这个空方法</b>：Reginth 的注册表是在**类初始化时**被填充的 ——
-     * {@link #REGINTH} 字段建好、然后每一条 {@code REGINTH.object(...)} 把条目交给它。
-     * 如果本类直到 {@code RegisterEvent} 之后才被加载，方块就会一个都注册不上（或者更糟：
-     * 别的类在 ITEM 事件里 {@code MiaBlocks.X.get()} 拿到 unbound value）。
-     * 以前是靠 {@code MIA} 构造函数里的 {@code MiaBlocks.register(modEventBus)} 顺带触发的，
-     * 那套 DeferredRegister 删掉之后必须显式碰一下，所以在 {@code MIA} 构造函数里调用它。
-     */
-    public static void bootstrap() {}
 
     // 深层安山岩
     // converted (closure): old provider helper = mirroredBlock
@@ -141,7 +130,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::itemParent)
                     .build()
                     .register();
-
     // 深界安山岩
     // converted (closure): old provider helper = stairsBlockWithItem
     public static final BlockEntry<StairBlock> ABYSS_ANDESITE_STAIRS =
@@ -446,7 +434,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::itemParent)
                     .build()
                     .register();
-
     // 切
     // converted (closure): old provider helper = blockWithItem
     public static final BlockEntry<Block> CHISLED_ABYSS_ANDESITE =
@@ -540,7 +527,6 @@ public class MiaBlocks {
                                             ctx, prov, MiaBlocks.ABYSS_ANDESITE_BRICKS.get()))
                     .build()
                     .register();
-
     // converted (closure): old provider helper = blockWithItem
     public static final BlockEntry<Block> MOSSY_ABYSS_ANDESITE_BRICKS =
             REGINTH.object("mossy_abyss_andesite_bricks")
@@ -609,7 +595,6 @@ public class MiaBlocks {
                                             ctx, prov, MiaBlocks.MOSSY_ABYSS_ANDESITE_BRICKS.get()))
                     .build()
                     .register();
-
     // 化石树
     // converted (closure): old provider helper = variantPillarBlockWithItem
     public static final BlockEntry<StrippedRotatedPillarBlock> FOSSILIZED_LOG =
@@ -692,7 +677,6 @@ public class MiaBlocks {
                     .model((ctx, prov) -> BlockStateGen.itemParent(ctx, prov, "0"))
                     .build()
                     .register();
-
     // converted (closure): old provider helper = variantPillarBlockWithItem
     public static final BlockEntry<StrippedRotatedPillarBlock> MOSSY_FOSSILIZED_LOG =
             REGINTH.object("mossy_fossilized_log")
@@ -831,7 +815,6 @@ public class MiaBlocks {
                                             ctx, prov, MiaBlocks.POLISHED_FOSSILIZED_WOOD.get()))
                     .build()
                     .register();
-
     // converted (closure): old provider helper = blockWithItem
     public static final BlockEntry<Block> POLISHED_STRIPPED_FOSSILIZED_WOOD =
             REGINTH.object("polished_stripped_fossilized_wood")
@@ -989,7 +972,6 @@ public class MiaBlocks {
                                             ctx, prov, MiaBlocks.FOSSILIZED_WOOD_BRICKS.get()))
                     .build()
                     .register();
-
     // converted (closure): old provider helper = blockWithItem
     public static final BlockEntry<Block> STRIPPED_FOSSILIZED_WOOD_BRICKS =
             REGINTH.object("stripped_fossilized_wood_bricks")
@@ -1143,7 +1125,6 @@ public class MiaBlocks {
                                             MiaBlocks.MOSSY_FOSSILIZED_WOOD_BRICKS.get()))
                     .build()
                     .register();
-
     // converted (closure): old provider helper = blockWithItem
     public static final BlockEntry<Block> MOSSY_STRIPPED_FOSSILIZED_WOOD_BRICKS =
             REGINTH.object("mossy_stripped_fossilized_wood_bricks")
@@ -1221,7 +1202,6 @@ public class MiaBlocks {
                                             MiaBlocks.MOSSY_STRIPPED_FOSSILIZED_WOOD_BRICKS.get()))
                     .build()
                     .register();
-
     // 天雾树
     // 大面积迁移样板：方块状态/模型/战利品表/语言键全部由 Reginth 的 builder 链驱动，
     // 对应关系与旧的 MiaBlockStateProvider / MiaBlockLootTable 逐项对齐（见 BlockStateGen 的类注释）。
@@ -1243,7 +1223,6 @@ public class MiaBlocks {
                     .blockstate(BlockStateGen::log)
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<MiaWoodBlock> SKYFOG_WOOD =
             REGINTH.object("skyfog_wood")
                     .block(MiaWoodBlock::new)
@@ -1257,7 +1236,6 @@ public class MiaBlocks {
                     .blockstate((ctx, prov) -> BlockStateGen.wood(ctx, prov, SKYFOG_LOG.get()))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<MiaWoodBlock> STRIPPED_SKYFOG_LOG =
             REGINTH.object("stripped_skyfog_log")
                     .block(MiaWoodBlock::new)
@@ -1271,7 +1249,6 @@ public class MiaBlocks {
                     .blockstate(BlockStateGen::log)
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<MiaWoodBlock> STRIPPED_SKYFOG_WOOD =
             REGINTH.object("stripped_skyfog_wood")
                     .block(MiaWoodBlock::new)
@@ -1286,7 +1263,6 @@ public class MiaBlocks {
                             (ctx, prov) -> BlockStateGen.wood(ctx, prov, STRIPPED_SKYFOG_LOG.get()))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<MiaPlankBlock> SKYFOG_PLANKS =
             REGINTH.object("skyfog_planks")
                     .block(MiaPlankBlock::new)
@@ -1299,7 +1275,6 @@ public class MiaBlocks {
                                             .ignitedByLava())
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<StairBlock> SKYFOG_STAIRS =
             REGINTH.object("skyfog_stairs")
                     .block(p -> new StairBlock(SKYFOG_PLANKS.get().defaultBlockState(), p))
@@ -1307,7 +1282,6 @@ public class MiaBlocks {
                     .blockstate((ctx, prov) -> BlockStateGen.stairs(ctx, prov, SKYFOG_PLANKS.get()))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<SlabBlock> SKYFOG_SLAB =
             REGINTH.object("skyfog_slab")
                     .block(SlabBlock::new)
@@ -1317,7 +1291,6 @@ public class MiaBlocks {
                     .loot((tables, block) -> tables.add(block, tables.createSlabItemTable(block)))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<FenceBlock> SKYFOG_FENCE =
             REGINTH.object("skyfog_fence")
                     .block(FenceBlock::new)
@@ -1330,7 +1303,6 @@ public class MiaBlocks {
                     .model((ctx, prov) -> BlockStateGen.fenceItem(ctx, prov, SKYFOG_PLANKS.get()))
                     .build()
                     .register();
-
     public static final BlockEntry<FenceGateBlock> SKYFOG_FENCE_GATE =
             REGINTH.object("skyfog_fence_gate")
                     .block(p -> new FenceGateBlock(WoodType.BAMBOO, p))
@@ -1342,7 +1314,6 @@ public class MiaBlocks {
                             (ctx, prov) -> BlockStateGen.fenceGate(ctx, prov, SKYFOG_PLANKS.get()))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<DoorBlock> SKYFOG_DOOR =
             REGINTH.object("skyfog_door")
                     .block(p -> new DoorBlock(BlockSetType.BAMBOO, p))
@@ -1362,7 +1333,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::doorItem)
                     .build()
                     .register();
-
     public static final BlockEntry<TrapDoorBlock> SKYFOG_TRAPDOOR =
             REGINTH.object("skyfog_trapdoor")
                     .block(p -> new TrapDoorBlock(BlockSetType.BAMBOO, p))
@@ -1384,7 +1354,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::trapdoorItem)
                     .build()
                     .register();
-
     public static final BlockEntry<SaplingBlock> SKYFOG_SAPLING =
             REGINTH.object("skyfog_sapling")
                     .block(p -> new SaplingBlock(MiaTreeGrowers.SKYFOG_TREE, p))
@@ -1401,7 +1370,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::bushItem)
                     .build()
                     .register();
-
     public static final BlockEntry<MiaLeavesBlock> SKYFOG_LEAVES =
             REGINTH.object("skyfog_leaves")
                     .block(MiaLeavesBlock::new)
@@ -1415,7 +1383,6 @@ public class MiaBlocks {
                                                     tables, block, SKYFOG_SAPLING.get())))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<MiaLeavesBlock> SKYFOG_LEAVES_WITH_FRUITS =
             REGINTH.object("skyfog_leaves_with_fruits")
                     .block(MiaLeavesBlock::new)
@@ -1432,7 +1399,6 @@ public class MiaBlocks {
                                                     MiaItems.MISTFUZZ_PEACH.get())))
                     .simpleItem()
                     .register();
-
     // 翠寂菌
     // converted (closure): old provider helper = logBlockWithItem
     public static final BlockEntry<MiaWoodBlock> VERDANT_STEM =
@@ -1643,11 +1609,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::bushItem)
                     .build()
                     .register();
-    // ==================== 太初菌 / 菌丝（移植自 PoopSky） ====================
-    // 命名与原模组一一对应；贴图、模型、掉落、特性均按原实现还原。
-    // 注意 primo_stem / primo_hyphae 用的是原版 RotatedPillarBlock 而不是 MiaWoodBlock：
-    // 前者是"下界木"性质（SoundType.STEM / NETHER_WOOD、不可燃），MiaWoodBlock 会带可燃性。
-
     public static final BlockEntry<MyceliumBlock> MYCELIUM_BLOCK =
             REGINTH.object("mycelium_block")
                     .block(MyceliumBlock::new)
@@ -1660,7 +1621,10 @@ public class MiaBlocks {
                     .blockstate(BlockStateGen::rotationYCubeAll)
                     .simpleItem()
                     .register();
-
+    // ==================== 太初菌 / 菌丝（移植自 PoopSky） ====================
+    // 命名与原模组一一对应；贴图、模型、掉落、特性均按原实现还原。
+    // 注意 primo_stem / primo_hyphae 用的是原版 RotatedPillarBlock 而不是 MiaWoodBlock：
+    // 前者是"下界木"性质（SoundType.STEM / NETHER_WOOD、不可燃），MiaWoodBlock 会带可燃性。
     public static final BlockEntry<MyceliumMatBlock> MYCELIUM_MAT =
             REGINTH.object("mycelium_mat")
                     .block(MyceliumMatBlock::new)
@@ -1679,7 +1643,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::bushItem)
                     .build()
                     .register();
-
     public static final BlockEntry<PinkPetalsBlock> MUSHROOM_BED =
             REGINTH.object("mushroom_bed")
                     .block(PinkPetalsBlock::new)
@@ -1695,7 +1658,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::aloneItem)
                     .build()
                     .register();
-
     // 菌柄/菌核用 StrippedRotatedPillarBlock：它只加"斧头去皮"（映射见该类的 getStrippables），
     // 不像 MiaWoodBlock 那样额外加可燃性 —— 原模组的太初木是"下界木"性质，不可燃。
     public static final BlockEntry<StrippedRotatedPillarBlock> PRIMO_STEM =
@@ -1710,7 +1672,6 @@ public class MiaBlocks {
                     .blockstate(BlockStateGen::log)
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<StrippedRotatedPillarBlock> PRIMO_HYPHAE =
             REGINTH.object("primo_hyphae")
                     .block(StrippedRotatedPillarBlock::new)
@@ -1725,7 +1686,6 @@ public class MiaBlocks {
                                     BlockStateGen.wood(ctx, prov, MiaBlocks.PRIMO_STEM.get()))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<RotatedPillarBlock> STRIPPED_PRIMO_STEM =
             REGINTH.object("stripped_primo_stem")
                     .block(RotatedPillarBlock::new)
@@ -1738,7 +1698,6 @@ public class MiaBlocks {
                     .blockstate(BlockStateGen::log)
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<RotatedPillarBlock> STRIPPED_PRIMO_HYPHAE =
             REGINTH.object("stripped_primo_hyphae")
                     .block(RotatedPillarBlock::new)
@@ -1754,7 +1713,6 @@ public class MiaBlocks {
                                             ctx, prov, MiaBlocks.STRIPPED_PRIMO_STEM.get()))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<Block> PRIMO_PLANKS =
             REGINTH.object("primo_planks")
                     .block(Block::new)
@@ -1766,7 +1724,6 @@ public class MiaBlocks {
                                             .sound(SoundType.NETHER_WOOD))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<StairBlock> PRIMO_STAIRS =
             REGINTH.object("primo_stairs")
                     .block(p -> new StairBlock(PRIMO_PLANKS.get().defaultBlockState(), p))
@@ -1776,7 +1733,6 @@ public class MiaBlocks {
                                     BlockStateGen.stairs(ctx, prov, MiaBlocks.PRIMO_PLANKS.get()))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<SlabBlock> PRIMO_SLAB =
             REGINTH.object("primo_slab")
                     .block(SlabBlock::new)
@@ -1787,7 +1743,6 @@ public class MiaBlocks {
                     .loot((tables, block) -> tables.add(block, tables.createSlabItemTable(block)))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<FenceBlock> PRIMO_FENCE =
             REGINTH.object("primo_fence")
                     .block(FenceBlock::new)
@@ -1805,7 +1760,6 @@ public class MiaBlocks {
                                             ctx, prov, MiaBlocks.PRIMO_PLANKS.get()))
                     .build()
                     .register();
-
     public static final BlockEntry<FenceGateBlock> PRIMO_FENCE_GATE =
             REGINTH.object("primo_fence_gate")
                     .block(p -> new FenceGateBlock(WoodType.CRIMSON, p))
@@ -1819,7 +1773,6 @@ public class MiaBlocks {
                                             ctx, prov, MiaBlocks.PRIMO_PLANKS.get()))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<DoorBlock> PRIMO_DOOR =
             REGINTH.object("primo_door")
                     .block(p -> new DoorBlock(BlockSetType.CRIMSON, p))
@@ -1833,7 +1786,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::doorItem)
                     .build()
                     .register();
-
     public static final BlockEntry<TrapDoorBlock> PRIMO_TRAPDOOR =
             REGINTH.object("primo_trapdoor")
                     .block(p -> new TrapDoorBlock(BlockSetType.CRIMSON, p))
@@ -1846,7 +1798,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::trapdoorItem)
                     .build()
                     .register();
-
     public static final BlockEntry<PressurePlateBlock> PRIMO_PRESSURE_PLATE =
             REGINTH.object("primo_pressure_plate")
                     .block(p -> new PressurePlateBlock(BlockSetType.CRIMSON, p))
@@ -1860,7 +1811,6 @@ public class MiaBlocks {
                                             ctx, prov, MiaBlocks.PRIMO_PLANKS.get()))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<ButtonBlock> PRIMO_BUTTON =
             REGINTH.object("primo_button")
                     .block(p -> new ButtonBlock(BlockSetType.CRIMSON, 30, p))
@@ -1875,7 +1825,6 @@ public class MiaBlocks {
                                             ctx, prov, MiaBlocks.PRIMO_PLANKS.get()))
                     .build()
                     .register();
-
     public static final BlockEntry<PrimoCapBlock> PRIMO_CAP =
             REGINTH.object("primo_cap")
                     .block(PrimoCapBlock::new)
@@ -1886,7 +1835,6 @@ public class MiaBlocks {
                                             .sound(SoundType.WART_BLOCK))
                     .simpleItem()
                     .register();
-
     public static final BlockEntry<GlowPrimoCapBlock> GLOW_PRIMO_CAP =
             REGINTH.object("glow_primo_cap")
                     .block(GlowPrimoCapBlock::new)
@@ -1900,7 +1848,6 @@ public class MiaBlocks {
                     .blockstate(BlockStateGen::translucentCubeAll)
                     .simpleItem()
                     .register();
-
     // 注意：这两个真菌**故意不加 noCollission**（原实现如此）——菌盖可以站上去并被弹起。
     public static final BlockEntry<PrimoFungusBlock> PRIMO_FUNGUS =
             REGINTH.object("primo_fungus")
@@ -1919,7 +1866,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::aloneItem)
                     .build()
                     .register();
-
     public static final BlockEntry<PrimoFungusBlock> GLOW_PRIMO_FUNGUS =
             REGINTH.object("glow_primo_fungus")
                     .block(p -> new PrimoFungusBlock(MiaTreeFeatures.GLOW_PRIMO_FUNGUS, p))
@@ -1938,7 +1884,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::aloneItem)
                     .build()
                     .register();
-
     // 倒悬树
     // converted (closure): old provider helper = logBlockWithItem
     public static final BlockEntry<MiaWoodBlock> INVERTED_LOG =
@@ -2143,7 +2088,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::bushItem)
                     .build()
                     .register();
-
     // 开关
     // converted (closure): old provider helper = pressurePlateBlockWithItem
     public static final BlockEntry<PressurePlateBlock> SKYFOG_PRESSURE_PLATE =
@@ -2869,7 +2813,6 @@ public class MiaBlocks {
                                             .sound(SoundType.FROGLIGHT))
                     .simpleItem()
                     .register();
-
     // converted (closure): old provider helper = lampTubeBlock
     public static final BlockEntry<PrasioliteTubeBlock> PRASIOLITE_LAMPTUBE =
             REGINTH.object("prasiolite_lamptube")
@@ -2890,7 +2833,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::itemParent)
                     .build()
                     .register();
-
     @SuppressWarnings("deprecation")
     // converted (closure): old provider helper = lampTubeBlock
     public static final BlockEntry<AmethystTubeBlock> AMETHYST_LAMPTUBE =
@@ -2910,7 +2852,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::itemParent)
                     .build()
                     .register();
-
     // converted (closure): old provider helper = baseBlockState
     public static final BlockEntry<PedestalBlock> PEDESTAL =
             REGINTH.object("pedestal")
@@ -3034,7 +2975,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::itemParent)
                     .build()
                     .register();
-
     @SuppressWarnings("deprecation")
     // converted (closure): old provider helper = ropeBlock
     // 物品是 RopeItem（不是普通 BlockItem），用 BlockBuilder.item(factory) 注册：
@@ -3056,7 +2996,6 @@ public class MiaBlocks {
                     .model(BlockStateGen::aloneItem)
                     .build()
                     .register();
-
     // 工作台
     // converted (closure): old provider helper = baseBlockState
     public static final BlockEntry<ArtifactSmithingTableBlock> ARTIFACT_SMITHING_TABLE =
@@ -3076,6 +3015,18 @@ public class MiaBlocks {
                     .model(BlockStateGen::itemParent)
                     .build()
                     .register();
+
+    /**
+     * 强制初始化本类。
+     * <p>
+     * <b>为什么需要这个空方法</b>：Reginth 的注册表是在**类初始化时**被填充的 ——
+     * {@link #REGINTH} 字段建好、然后每一条 {@code REGINTH.object(...)} 把条目交给它。
+     * 如果本类直到 {@code RegisterEvent} 之后才被加载，方块就会一个都注册不上（或者更糟：
+     * 别的类在 ITEM 事件里 {@code MiaBlocks.X.get()} 拿到 unbound value）。
+     * 以前是靠 {@code MIA} 构造函数里的 {@code MiaBlocks.register(modEventBus)} 顺带触发的，
+     * 那套 DeferredRegister 删掉之后必须显式碰一下，所以在 {@code MIA} 构造函数里调用它。
+     */
+    public static void bootstrap() {}
 
     private static boolean never(BlockState state, BlockGetter blockGetter, BlockPos pos) {
         return false;

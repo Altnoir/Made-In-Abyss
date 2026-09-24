@@ -3,7 +3,6 @@ package com.altnoir.mia.worldgen.noise_setting;
 import com.altnoir.mia.core.MiaHeight;
 import com.altnoir.mia.init.MiaBlocks;
 import com.altnoir.mia.util.MiaUtil;
-import java.util.List;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
@@ -11,16 +10,17 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.NoiseSettings;
 
-public class MiaNoiseGeneratorSettings {
-    private static final NoiseSettings THE_ABYSS_NOISE_SETTINGS =
-            NoiseSettings.create(MiaHeight.THE_ABYSS.minY(), MiaHeight.THE_ABYSS.allY(), 2, 1);
-    private static final NoiseSettings GREAT_FAULT_NOISE_SETTINGS =
-            NoiseSettings.create(MiaHeight.GREAT_FAULT.minY(), MiaHeight.GREAT_FAULT.allY(), 2, 1);
+import java.util.List;
 
+public class MiaNoiseGeneratorSettings {
     public static final ResourceKey<NoiseGeneratorSettings> THE_ABYSS =
             ResourceKey.create(Registries.NOISE_SETTINGS, MiaUtil.miaId("the_abyss"));
     public static final ResourceKey<NoiseGeneratorSettings> GREAT_FAULT =
             ResourceKey.create(Registries.NOISE_SETTINGS, MiaUtil.miaId("great_fault"));
+    private static final NoiseSettings THE_ABYSS_NOISE_SETTINGS =
+            NoiseSettings.create(MiaHeight.THE_ABYSS.minY(), MiaHeight.THE_ABYSS.allY(), 2, 1);
+    private static final NoiseSettings GREAT_FAULT_NOISE_SETTINGS =
+            NoiseSettings.create(MiaHeight.GREAT_FAULT.minY(), MiaHeight.GREAT_FAULT.allY(), 2, 1);
 
     public static void bootstrap(BootstrapContext<NoiseGeneratorSettings> context) {
         context.register(THE_ABYSS, theAbyss(context));

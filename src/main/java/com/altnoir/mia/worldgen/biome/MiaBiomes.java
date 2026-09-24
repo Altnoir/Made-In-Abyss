@@ -3,12 +3,13 @@ package com.altnoir.mia.worldgen.biome;
 import com.altnoir.mia.util.MiaUtil;
 import com.altnoir.mia.worldgen.biome.great_fault.GreatFaultBiomes;
 import com.altnoir.mia.worldgen.biome.the_abyss.TheAbyssBiomes;
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biome;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MiaBiomes {
     /**

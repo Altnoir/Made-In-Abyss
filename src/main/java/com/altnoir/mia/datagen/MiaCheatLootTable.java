@@ -1,7 +1,6 @@
 package com.altnoir.mia.datagen;
 
 import com.altnoir.mia.init.MiaItems;
-import java.util.function.BiConsumer;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.loot.LootTableSubProvider;
@@ -15,6 +14,8 @@ import net.minecraft.world.level.storage.loot.functions.EnchantRandomlyFunction;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
+
+import java.util.function.BiConsumer;
 
 public record MiaCheatLootTable(HolderLookup.Provider registries) implements LootTableSubProvider {
     public static final ResourceKey<LootTable> SIMPLE_RUINS =

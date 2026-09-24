@@ -5,9 +5,6 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import net.minecraft.core.Holder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -15,6 +12,10 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class ArtifactEnhancementComponent {
     public static final ArtifactEnhancementComponent EMPTY =
@@ -58,6 +59,17 @@ public class ArtifactEnhancementComponent {
         return getAttributeModifiers(null);
     }
 
+    public static String getModifierKey(
+            Holder<Attribute> attribute, AttributeModifier.Operation operation) {
+        String attr = attribute.unwrapKey().map(key -> key.location().getPath()).orElse("unknown");
+        String op = operation.name().toLowerCase();
+        return String.format("artifact_enhancement.%s.%s", attr, op);
+    }
+
+    public ArtifactEnhancementComponent setLevel(int level) {
+        return new ArtifactEnhancementComponent(this.level + 1, getArtifactStats());
+    }
+
     public Multimap<Holder<Attribute>, AttributeModifier> getAttributeModifiers(
             ResourceLocation curiosId) {
         ImmutableMultimap.Builder<Holder<Attribute>, AttributeModifier> builder =
@@ -76,10 +88,6 @@ public class ArtifactEnhancementComponent {
             builder.put(modifier.attribute(), newModifier);
         }
         return builder.build();
-    }
-
-    public ArtifactEnhancementComponent setLevel(int level) {
-        return new ArtifactEnhancementComponent(this.level + 1, getArtifactStats());
     }
 
     public ArtifactEnhancementComponent addAttributeModifier(
@@ -113,13 +121,6 @@ public class ArtifactEnhancementComponent {
                                     operation)));
         }
         return new ArtifactEnhancementComponent(this.getLevel(), newList);
-    }
-
-    public static String getModifierKey(
-            Holder<Attribute> attribute, AttributeModifier.Operation operation) {
-        String attr = attribute.unwrapKey().map(key -> key.location().getPath()).orElse("unknown");
-        String op = operation.name().toLowerCase();
-        return String.format("artifact_enhancement.%s.%s", attr, op);
     }
 
     @Override

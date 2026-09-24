@@ -4,9 +4,6 @@ import com.altnoir.mia.common.block.MiaBrushableBlock;
 import com.altnoir.mia.common.block.entity.MiaBrushableBlockEntity;
 import com.altnoir.mia.init.MiaTags;
 import com.google.common.collect.Sets;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -31,6 +28,10 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.common.ItemAbility;
+
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CompositeItem extends DiggerItem {
     protected static final Set<ItemAbility> DEFAULT_COMPOSITE_ACTIONS =
@@ -131,7 +132,7 @@ public class CompositeItem extends DiggerItem {
         }
     }
 
-    static record DustParticlesDelta(double xd, double yd, double zd) {
+    record DustParticlesDelta(double xd, double yd, double zd) {
         public static DustParticlesDelta fromDirection(Vec3 pos, Direction direction) {
             return switch (direction) {
                 case DOWN, UP -> new DustParticlesDelta(pos.z(), 0.0, -pos.x());

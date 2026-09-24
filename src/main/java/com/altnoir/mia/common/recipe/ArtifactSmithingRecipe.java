@@ -5,7 +5,6 @@ import com.altnoir.mia.init.MiaComponents;
 import com.altnoir.mia.init.MiaRecipes;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import java.util.Objects;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -18,6 +17,8 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+
+import java.util.Objects;
 
 public class ArtifactSmithingRecipe implements Recipe<ArtifactSmithingRecipeInput> {
 
@@ -129,6 +130,8 @@ public class ArtifactSmithingRecipe implements Recipe<ArtifactSmithingRecipeInpu
 
     public static class Serializer implements RecipeSerializer<ArtifactSmithingRecipe> {
 
+        public static final StreamCodec<RegistryFriendlyByteBuf, ArtifactSmithingRecipe>
+                STREAM_CODEC = StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
         private static final MapCodec<ArtifactSmithingRecipe> CODEC =
                 RecordCodecBuilder.mapCodec(
                         (codec) ->
@@ -149,9 +152,6 @@ public class ArtifactSmithingRecipe implements Recipe<ArtifactSmithingRecipeInpu
                                                         .fieldOf("operation")
                                                         .forGetter((recipe) -> recipe.operation))
                                         .apply(codec, ArtifactSmithingRecipe::new));
-
-        public static final StreamCodec<RegistryFriendlyByteBuf, ArtifactSmithingRecipe>
-                STREAM_CODEC = StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
 
         @Override
         public MapCodec<ArtifactSmithingRecipe> codec() {

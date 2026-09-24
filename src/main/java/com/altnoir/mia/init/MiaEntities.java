@@ -3,13 +3,14 @@ package com.altnoir.mia.init;
 import com.altnoir.mia.MIA;
 import com.altnoir.mia.common.entity.projectile.HookEntity;
 import com.altnoir.mia.util.MiaUtil;
-import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.function.Supplier;
 
 public class MiaEntities {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =

@@ -482,9 +482,9 @@ public class TheAbyssDimEffects extends DimensionSpecialEffects {
             for (int l1 = -32; l1 < 32; l1 += 32) {
                 for (int i2 = -32; i2 < 32; i2 += 32) {
                     bufferbuilder
-                            .addVertex((float) (l1 + 0), f17, (float) (i2 + 32))
+                            .addVertex((float) (l1), f17, (float) (i2 + 32))
                             .setUv(
-                                    (float) (l1 + 0) * 0.00390625F + f3,
+                                    (float) (l1) * 0.00390625F + f3,
                                     (float) (i2 + 32) * 0.00390625F + f4)
                             .setColor(f5, f6, f7, 0.8F)
                             .setNormal(0.0F, -1.0F, 0.0F);
@@ -496,17 +496,17 @@ public class TheAbyssDimEffects extends DimensionSpecialEffects {
                             .setColor(f5, f6, f7, 0.8F)
                             .setNormal(0.0F, -1.0F, 0.0F);
                     bufferbuilder
-                            .addVertex((float) (l1 + 32), f17, (float) (i2 + 0))
+                            .addVertex((float) (l1 + 32), f17, (float) (i2))
                             .setUv(
                                     (float) (l1 + 32) * 0.00390625F + f3,
-                                    (float) (i2 + 0) * 0.00390625F + f4)
+                                    (float) (i2) * 0.00390625F + f4)
                             .setColor(f5, f6, f7, 0.8F)
                             .setNormal(0.0F, -1.0F, 0.0F);
                     bufferbuilder
-                            .addVertex((float) (l1 + 0), f17, (float) (i2 + 0))
+                            .addVertex((float) (l1), f17, (float) (i2))
                             .setUv(
-                                    (float) (l1 + 0) * 0.00390625F + f3,
-                                    (float) (i2 + 0) * 0.00390625F + f4)
+                                    (float) (l1) * 0.00390625F + f3,
+                                    (float) (i2) * 0.00390625F + f4)
                             .setColor(f5, f6, f7, 0.8F)
                             .setNormal(0.0F, -1.0F, 0.0F);
                 }

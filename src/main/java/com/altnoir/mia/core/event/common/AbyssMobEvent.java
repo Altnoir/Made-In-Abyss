@@ -4,9 +4,6 @@ import com.altnoir.mia.MiaConfig;
 import com.altnoir.mia.core.MiaColors;
 import com.altnoir.mia.init.MiaAttachments;
 import com.altnoir.mia.worldgen.dimension.MiaDimensions;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
@@ -22,6 +19,10 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.common.util.TriState;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+
 public class AbyssMobEvent {
     private static final short CHUNK_RADIUS = 28; // 从半径28个区块开始计算
     private static final List<EntityType<? extends Mob>> riderTypes =
@@ -32,7 +33,7 @@ public class AbyssMobEvent {
         var pos = mob.blockPosition();
 
         long chunkX = pos.getX() >> 4, chunkZ = pos.getZ() >> 4; // 等价于 / 16
-        long distance = (long) chunkX * chunkX + chunkZ * chunkZ;
+        long distance = chunkX * chunkX + chunkZ * chunkZ;
 
         if (distance <= CHUNK_RADIUS * CHUNK_RADIUS) return;
         double euclideanDistance = Math.sqrt(distance);

@@ -4,11 +4,12 @@ import com.altnoir.mia.common.item.abs.AbsSkill;
 import com.altnoir.mia.compat.kubejs.combo.ComboContext;
 import dev.latvian.mods.kubejs.item.ItemBuilder;
 import dev.latvian.mods.kubejs.typings.Info;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
 
 @Info(value = "Builder for custom skill items in Made-In-Abyss mod.")
 public class SkillBuilder extends ItemBuilder {

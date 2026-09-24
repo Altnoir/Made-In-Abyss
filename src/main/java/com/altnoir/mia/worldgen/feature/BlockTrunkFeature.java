@@ -20,6 +20,21 @@ public class BlockTrunkFeature extends Feature<BlockTrunkConfiguration> {
         super(codec);
     }
 
+    private static void truncate(
+            int[] layerHeights, int totalHeight, int currentHeight, boolean prioritizeTip) {
+        int i = totalHeight - currentHeight;
+        int j = prioritizeTip ? 1 : -1;
+        int k = prioritizeTip ? 0 : layerHeights.length - 1;
+        int l = prioritizeTip ? layerHeights.length : -1;
+
+        for (int i1 = k; i1 != l && i > 0; i1 += j) {
+            int j1 = layerHeights[i1];
+            int k1 = Math.min(j1, i);
+            i -= k1;
+            layerHeights[i1] -= k1;
+        }
+    }
+
     @Override
     public boolean place(FeaturePlaceContext<BlockTrunkConfiguration> context) {
         WorldGenLevel worldgenlevel = context.level();
@@ -129,21 +144,6 @@ public class BlockTrunkFeature extends Feature<BlockTrunkConfiguration> {
             }
 
             newPos = newPos.relative(dir);
-        }
-    }
-
-    private static void truncate(
-            int[] layerHeights, int totalHeight, int currentHeight, boolean prioritizeTip) {
-        int i = totalHeight - currentHeight;
-        int j = prioritizeTip ? 1 : -1;
-        int k = prioritizeTip ? 0 : layerHeights.length - 1;
-        int l = prioritizeTip ? layerHeights.length : -1;
-
-        for (int i1 = k; i1 != l && i > 0; i1 += j) {
-            int j1 = layerHeights[i1];
-            int k1 = Math.min(j1, i);
-            i -= k1;
-            layerHeights[i1] -= k1;
         }
     }
 }

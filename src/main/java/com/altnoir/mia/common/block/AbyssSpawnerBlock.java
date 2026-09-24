@@ -3,8 +3,6 @@ package com.altnoir.mia.common.block;
 import com.altnoir.mia.common.block.entity.AbyssSpawnerBlockEntity;
 import com.altnoir.mia.init.MiaBlockEntities;
 import com.mojang.serialization.MapCodec;
-import java.util.List;
-import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -24,6 +22,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 public class AbyssSpawnerBlock extends BaseEntityBlock {
     public static final MapCodec<AbyssSpawnerBlock> CODEC = simpleCodec(AbyssSpawnerBlock::new);

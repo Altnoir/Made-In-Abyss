@@ -2,8 +2,6 @@ package com.altnoir.mia.common.recipe;
 
 import com.altnoir.mia.MIA;
 import com.altnoir.mia.init.MiaRecipes;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementRequirements;
 import net.minecraft.advancements.AdvancementRewards;
@@ -20,6 +18,9 @@ import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.common.crafting.SizedIngredient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class LampTubeRecipeBuilder implements RecipeBuilder {
     private final SizedIngredient ingredient;
@@ -52,10 +53,10 @@ public class LampTubeRecipeBuilder implements RecipeBuilder {
                 SizedIngredient.of(tag, count), new ItemStack(result, resultCount));
     }
 
-    public @NotNull LampTubeRecipeBuilder unlockedBy(
-            @NotNull String name, @NotNull Criterion<?> criterion) {
-        this.criteria.put(name, criterion);
-        return this;
+    public static ResourceLocation getDefaultRecipeId(ItemLike itemLike) {
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(itemLike.asItem());
+        return ResourceLocation.fromNamespaceAndPath(
+                MIA.MOD_ID, RECIPE_TYPE + "/" + itemId.getPath());
     }
 
     @Override
@@ -70,6 +71,12 @@ public class LampTubeRecipeBuilder implements RecipeBuilder {
 
     public void save(@NotNull RecipeOutput recipeOutput) {
         this.save(recipeOutput, getDefaultRecipeId(this.getResult()));
+    }
+
+    public @NotNull LampTubeRecipeBuilder unlockedBy(
+            @NotNull String name, @NotNull Criterion<?> criterion) {
+        this.criteria.put(name, criterion);
+        return this;
     }
 
     public void save(@NotNull RecipeOutput recipeOutput, @NotNull String id) {
@@ -104,12 +111,6 @@ public class LampTubeRecipeBuilder implements RecipeBuilder {
         LampTubeRecipe recipe = new LampTubeRecipe(ingredient, result);
         recipeOutput.accept(
                 id, recipe, advancementBuilder.build(advancementId.withPrefix("recipes/")));
-    }
-
-    public static ResourceLocation getDefaultRecipeId(ItemLike itemLike) {
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(itemLike.asItem());
-        return ResourceLocation.fromNamespaceAndPath(
-                MIA.MOD_ID, RECIPE_TYPE + "/" + itemId.getPath());
     }
 
     private void ensureValid(ResourceLocation id) {

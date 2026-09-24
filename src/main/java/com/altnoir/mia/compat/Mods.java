@@ -1,13 +1,14 @@
 package com.altnoir.mia.compat;
 
-import java.util.Locale;
-import java.util.Optional;
-import java.util.function.Supplier;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.fml.loading.LoadingModList;
+
+import java.util.Locale;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 public enum Mods {
     PONDER;

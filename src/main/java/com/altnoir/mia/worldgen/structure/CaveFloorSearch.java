@@ -2,9 +2,6 @@ package com.altnoir.mia.worldgen.structure;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
@@ -14,12 +11,16 @@ import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.WorldGenerationContext;
 import net.minecraft.world.level.levelgen.structure.Structure;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * Selects dry cave floors from a bounded number of columns in a structure's candidate chunk.
  */
 public record CaveFloorSearch(VerticalAnchor minY, int clearance, int horizontalSamples) {
     public static final Codec<CaveFloorSearch> CODEC =
-            RecordCodecBuilder.<CaveFloorSearch>create(
+            RecordCodecBuilder.create(
                     instance ->
                             instance.group(
                                             VerticalAnchor.CODEC

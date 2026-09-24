@@ -46,6 +46,44 @@ public class WaterDoublePlantBlock extends BushBlock implements SimpleWaterlogge
                         .setValue(WATERLOGGED, Boolean.valueOf(false)));
     }
 
+    public static void placeAt(LevelAccessor level, BlockState state, BlockPos pos, int flags) {
+        BlockPos blockpos = pos.above();
+        level.setBlock(
+                pos,
+                copyWaterloggedFrom(level, pos, state.setValue(HALF, DoubleBlockHalf.LOWER)),
+                flags);
+        level.setBlock(
+                blockpos,
+                copyWaterloggedFrom(level, blockpos, state.setValue(HALF, DoubleBlockHalf.UPPER)),
+                flags);
+    }
+
+    public static BlockState copyWaterloggedFrom(
+            LevelReader level, BlockPos pos, BlockState state) {
+        return state.hasProperty(BlockStateProperties.WATERLOGGED)
+                ? state.setValue(
+                        BlockStateProperties.WATERLOGGED, Boolean.valueOf(level.isWaterAt(pos)))
+                : state;
+    }
+
+    protected static void preventDropFromBottomPart(
+            Level level, BlockPos pos, BlockState state, Player player) {
+        DoubleBlockHalf doubleblockhalf = state.getValue(HALF);
+        if (doubleblockhalf == DoubleBlockHalf.UPPER) {
+            BlockPos blockpos = pos.below();
+            BlockState blockstate = level.getBlockState(blockpos);
+            if (blockstate.is(state.getBlock())
+                    && blockstate.getValue(HALF) == DoubleBlockHalf.LOWER) {
+                BlockState blockstate1 =
+                        blockstate.getFluidState().is(Fluids.WATER)
+                                ? Blocks.WATER.defaultBlockState()
+                                : Blocks.AIR.defaultBlockState();
+                level.setBlock(blockpos, blockstate1, 35);
+                level.levelEvent(player, 2001, blockpos, Block.getId(blockstate));
+            }
+        }
+    }
+
     @Override
     protected BlockState updateShape(
             BlockState state,
@@ -110,26 +148,6 @@ public class WaterDoublePlantBlock extends BushBlock implements SimpleWaterlogge
         }
     }
 
-    public static void placeAt(LevelAccessor level, BlockState state, BlockPos pos, int flags) {
-        BlockPos blockpos = pos.above();
-        level.setBlock(
-                pos,
-                copyWaterloggedFrom(level, pos, state.setValue(HALF, DoubleBlockHalf.LOWER)),
-                flags);
-        level.setBlock(
-                blockpos,
-                copyWaterloggedFrom(level, blockpos, state.setValue(HALF, DoubleBlockHalf.UPPER)),
-                flags);
-    }
-
-    public static BlockState copyWaterloggedFrom(
-            LevelReader level, BlockPos pos, BlockState state) {
-        return state.hasProperty(BlockStateProperties.WATERLOGGED)
-                ? state.setValue(
-                        BlockStateProperties.WATERLOGGED, Boolean.valueOf(level.isWaterAt(pos)))
-                : state;
-    }
-
     @Override
     public BlockState playerWillDestroy(
             Level level, BlockPos pos, BlockState state, Player player) {
@@ -152,24 +170,6 @@ public class WaterDoublePlantBlock extends BushBlock implements SimpleWaterlogge
             @Nullable BlockEntity te,
             ItemStack stack) {
         super.playerDestroy(level, player, pos, Blocks.AIR.defaultBlockState(), te, stack);
-    }
-
-    protected static void preventDropFromBottomPart(
-            Level level, BlockPos pos, BlockState state, Player player) {
-        DoubleBlockHalf doubleblockhalf = state.getValue(HALF);
-        if (doubleblockhalf == DoubleBlockHalf.UPPER) {
-            BlockPos blockpos = pos.below();
-            BlockState blockstate = level.getBlockState(blockpos);
-            if (blockstate.is(state.getBlock())
-                    && blockstate.getValue(HALF) == DoubleBlockHalf.LOWER) {
-                BlockState blockstate1 =
-                        blockstate.getFluidState().is(Fluids.WATER)
-                                ? Blocks.WATER.defaultBlockState()
-                                : Blocks.AIR.defaultBlockState();
-                level.setBlock(blockpos, blockstate1, 35);
-                level.levelEvent(player, 2001, blockpos, Block.getId(blockstate));
-            }
-        }
     }
 
     @Override

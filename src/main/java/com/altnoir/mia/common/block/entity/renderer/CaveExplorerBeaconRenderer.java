@@ -18,24 +18,6 @@ public class CaveExplorerBeaconRenderer
         implements BlockEntityRenderer<CaveExplorerBeaconBlockEntity> {
     public CaveExplorerBeaconRenderer(BlockEntityRendererProvider.Context context) {}
 
-    @Override
-    public void render(
-            CaveExplorerBeaconBlockEntity blockEntity,
-            float partialTick,
-            PoseStack poseStack,
-            MultiBufferSource bufferSource,
-            int packedLight,
-            int packedOverlay) {
-        if (blockEntity.getBlockState().getValue(CaveExplorerBeaconBlock.LIT)) {
-            poseStack.pushPose();
-            poseStack.translate(0.5D, 0.5D, 0.5D);
-            poseStack.scale(0.25F, 0.25F, 0.25F);
-            renderRays(poseStack, bufferSource.getBuffer(RenderType.dragonRays()));
-            renderRays(poseStack, bufferSource.getBuffer(RenderType.dragonRaysDepth()));
-            poseStack.popPose();
-        }
-    }
-
     public static void renderRays(PoseStack poseStack, VertexConsumer buffer) {
         float timeConstant =
                 (float) (Blaze3D.getTime() * (double) 20.0F)
@@ -86,6 +68,24 @@ public class CaveExplorerBeaconRenderer
         }
 
         poseStack.popPose();
+    }
+
+    @Override
+    public void render(
+            CaveExplorerBeaconBlockEntity blockEntity,
+            float partialTick,
+            PoseStack poseStack,
+            MultiBufferSource bufferSource,
+            int packedLight,
+            int packedOverlay) {
+        if (blockEntity.getBlockState().getValue(CaveExplorerBeaconBlock.LIT)) {
+            poseStack.pushPose();
+            poseStack.translate(0.5D, 0.5D, 0.5D);
+            poseStack.scale(0.25F, 0.25F, 0.25F);
+            renderRays(poseStack, bufferSource.getBuffer(RenderType.dragonRays()));
+            renderRays(poseStack, bufferSource.getBuffer(RenderType.dragonRaysDepth()));
+            poseStack.popPose();
+        }
     }
 
     @Override

@@ -4,16 +4,6 @@ import com.altnoir.mia.MIA;
 import com.altnoir.mia.MiaConfig;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.IntPredicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
@@ -22,6 +12,10 @@ import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.IntPredicate;
 
 public final class AbyssWallPlanner {
     private static final int EMBED_SALT = 0x57414C4C;
@@ -32,11 +26,6 @@ public final class AbyssWallPlanner {
             CacheBuilder.newBuilder().weakKeys().maximumSize(16).build();
 
     private AbyssWallPlanner() {}
-
-    @FunctionalInterface
-    public interface RadiusPredictor {
-        OptionalDouble radiusAt(double angle, int y);
-    }
 
     public static List<AbyssWallCandidate> createPlan(
             long seed, AbyssWallPlanConfig config, RadiusPredictor predictor) {
@@ -301,6 +290,11 @@ public final class AbyssWallPlanner {
         BlockPos pos = blockPos(angle, y, radius);
         return density.compute(
                 new DensityFunction.SinglePointContext(pos.getX(), pos.getY(), pos.getZ()));
+    }
+
+    @FunctionalInterface
+    public interface RadiusPredictor {
+        OptionalDouble radiusAt(double angle, int y);
     }
 
     private record PlanKey(long seed, AbyssWallPlanConfig config, int abyssRadius) {}

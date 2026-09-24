@@ -1,7 +1,6 @@
 package com.altnoir.mia.common.item.abs;
 
 import com.altnoir.mia.init.MiaComponents;
-import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -9,8 +8,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+import java.util.List;
+
 public interface IArtifactSkill extends IArtifactItem {
-    public static final String TOOLTIP_SKILL_COOLDOWN_VALUE = "tooltip.mia.skill.cooldown_value";
+    String TOOLTIP_SKILL_COOLDOWN_VALUE = "tooltip.mia.skill.cooldown_value";
 
     /**
      * 获取组合键序列

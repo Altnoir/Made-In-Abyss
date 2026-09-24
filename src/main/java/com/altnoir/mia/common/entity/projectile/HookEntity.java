@@ -4,7 +4,6 @@ import com.altnoir.mia.MiaConfig;
 import com.altnoir.mia.init.MiaEntities;
 import com.altnoir.mia.init.MiaItems;
 import com.mojang.serialization.Codec;
-import java.util.function.IntFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -26,6 +25,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.fluids.FluidType;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.IntFunction;
 
 public class HookEntity extends Projectile {
     public static final EntityDataAccessor<Integer> DATA_HOOK_STATE =

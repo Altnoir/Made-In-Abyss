@@ -14,13 +14,14 @@ import com.altnoir.mia.worldgen.processor_list.MiaProcessorLists;
 import com.altnoir.mia.worldgen.structure.MiaStructureSets;
 import com.altnoir.mia.worldgen.structure.MiaStructures;
 import com.altnoir.mia.worldgen.structure.pools.MiaPools;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
+
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public class MiaWorldGenProvider extends DatapackBuiltinEntriesProvider {
     public static final RegistrySetBuilder BUILDER =

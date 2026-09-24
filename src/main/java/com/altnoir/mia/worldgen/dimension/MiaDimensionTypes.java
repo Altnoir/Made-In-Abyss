@@ -3,13 +3,14 @@ package com.altnoir.mia.worldgen.dimension;
 import com.altnoir.mia.core.MiaHeight;
 import com.altnoir.mia.core.event.client.ClientDimEffects;
 import com.altnoir.mia.util.MiaUtil;
-import java.util.OptionalLong;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.dimension.DimensionType;
+
+import java.util.OptionalLong;
 
 public class MiaDimensionTypes {
     public static final ResourceKey<DimensionType> THE_ABYSS_TYPE =

@@ -2,8 +2,6 @@ package com.altnoir.mia.datagen;
 
 import com.altnoir.mia.MIA;
 import com.altnoir.mia.core.spawner.AbyssTrialSpawnerDataProvider;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
@@ -11,6 +9,9 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class MiaTrialSpawnerProvider extends AbyssTrialSpawnerDataProvider {
     public MiaTrialSpawnerProvider(

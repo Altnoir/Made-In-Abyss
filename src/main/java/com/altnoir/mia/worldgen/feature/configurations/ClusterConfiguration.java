@@ -6,7 +6,9 @@ import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 
-public class ClusterConfiguration implements FeatureConfiguration {
+public record ClusterConfiguration(BlockStateProvider stateProvider, BlockStateProvider crystalStateProviderUp,
+                                   BlockStateProvider crystalStateProviderDown, float crystalChance, IntProvider size,
+                                   IntProvider height) implements FeatureConfiguration {
     public static final Codec<ClusterConfiguration> CODEC =
             RecordCodecBuilder.create(
                     instance ->
@@ -35,25 +37,4 @@ public class ClusterConfiguration implements FeatureConfiguration {
                                                     .forGetter(config -> config.height))
                                     .apply(instance, ClusterConfiguration::new));
 
-    public final BlockStateProvider stateProvider;
-    public final BlockStateProvider crystalStateProviderUp;
-    public final BlockStateProvider crystalStateProviderDown;
-    public final float crystalChance;
-    public final IntProvider size;
-    public final IntProvider height;
-
-    public ClusterConfiguration(
-            BlockStateProvider stateProvider,
-            BlockStateProvider crystalStateProviderUp,
-            BlockStateProvider crystalStateProviderDown,
-            float crystalChance,
-            IntProvider size,
-            IntProvider height) {
-        this.stateProvider = stateProvider;
-        this.crystalStateProviderUp = crystalStateProviderUp;
-        this.crystalStateProviderDown = crystalStateProviderDown;
-        this.crystalChance = crystalChance;
-        this.size = size;
-        this.height = height;
-    }
 }

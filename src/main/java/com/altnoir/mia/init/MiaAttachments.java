@@ -3,11 +3,12 @@ package com.altnoir.mia.init;
 import com.altnoir.mia.MIA;
 import com.altnoir.mia.common.attachments.Curse;
 import com.mojang.serialization.Codec;
-import java.util.function.Supplier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
+
+import java.util.function.Supplier;
 
 public class MiaAttachments {
     private static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =

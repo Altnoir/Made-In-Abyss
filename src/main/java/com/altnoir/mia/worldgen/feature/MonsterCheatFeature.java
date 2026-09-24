@@ -5,7 +5,6 @@ import com.altnoir.mia.datagen.MiaCheatLootTable;
 import com.altnoir.mia.init.worldgen.MiaFeatures;
 import com.altnoir.mia.worldgen.feature.configurations.MonsterCheatConfiguration;
 import com.mojang.serialization.Codec;
-import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
@@ -19,6 +18,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
+
+import java.util.function.Predicate;
 
 public class MonsterCheatFeature extends Feature<MonsterCheatConfiguration> {
     private static final EntityType<?>[] MOBS =
@@ -99,7 +100,7 @@ public class MonsterCheatFeature extends Feature<MonsterCheatConfiguration> {
                 this.safeSetBlock(
                         worldgenlevel,
                         blockpos,
-                        bsc.coreStateProvider.getState(randomsource, blockpos),
+                        bsc.coreStateProvider().getState(randomsource, blockpos),
                         predicate);
 
                 for (Direction direction :
@@ -115,7 +116,7 @@ public class MonsterCheatFeature extends Feature<MonsterCheatConfiguration> {
                         this.safeSetBlock(
                                 worldgenlevel,
                                 statePos,
-                                bsc.outerStateProvider.getState(randomsource, statePos),
+                                bsc.outerStateProvider().getState(randomsource, statePos),
                                 predicate);
 
                         if (direction != Direction.UP) {
@@ -124,7 +125,7 @@ public class MonsterCheatFeature extends Feature<MonsterCheatConfiguration> {
                                 this.safeSetBlock(
                                         worldgenlevel,
                                         statePos2,
-                                        bsc.outerStateProvider.getState(randomsource, statePos2),
+                                        bsc.outerStateProvider().getState(randomsource, statePos2),
                                         predicate);
                             }
                         }

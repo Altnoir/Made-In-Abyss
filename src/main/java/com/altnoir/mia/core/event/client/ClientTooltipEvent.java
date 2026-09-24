@@ -6,9 +6,6 @@ import com.altnoir.mia.core.MiaColors;
 import com.altnoir.mia.init.MiaAttributes;
 import com.altnoir.mia.init.MiaRecipes;
 import com.altnoir.mia.init.MiaTags;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -21,6 +18,10 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientTooltipEvent {

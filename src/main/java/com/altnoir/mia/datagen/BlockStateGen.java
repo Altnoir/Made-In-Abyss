@@ -7,9 +7,6 @@ import com.altnoir.mia.common.block.ColumnBlock;
 import com.altnoir.mia.common.block.DoubleBerryblock;
 import com.altnoir.mia.datagen.blockstate.MiaModelProvider;
 import com.altnoir.mia.util.MiaUtil;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -23,6 +20,10 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.neoforged.neoforge.client.model.generators.ConfiguredModel;
 import net.neoforged.neoforge.client.model.generators.ModelFile;
 import net.neoforged.neoforge.client.model.generators.VariantBlockStateBuilder;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * MIA 的方块模型/方块状态 datagen 助手（Reginth 版）。
@@ -69,11 +70,23 @@ public final class BlockStateGen {
     private static boolean tsbTemplateEmitted = false;
     private static boolean hopperTemplateEmitted = false;
 
-    private BlockStateGen() {}
+    /**
+     * 多面附着方块的六个面及其模型旋转（与原版发光地衣的取向一致）。
+     */
+    private static final List<MultifaceFace> MULTIFACE_FACES =
+            List.of(
+                    new MultifaceFace(BlockStateProperties.NORTH, 0, 0),
+                    new MultifaceFace(BlockStateProperties.EAST, 0, 90),
+                    new MultifaceFace(BlockStateProperties.SOUTH, 0, 180),
+                    new MultifaceFace(BlockStateProperties.WEST, 0, 270),
+                    new MultifaceFace(BlockStateProperties.UP, 270, 0),
+                    new MultifaceFace(BlockStateProperties.DOWN, 90, 0));
 
     // ------------------------------------------------------------------
     // 简单 helper：方块状态 / 方块模型
     // ------------------------------------------------------------------
+
+    private BlockStateGen() {}
 
     /**
      * 原木/菌柄：轴向贴图，模型名 = 方块名。
@@ -172,6 +185,14 @@ public final class BlockStateGen {
                         .renderType(renderType));
     }
 
+    private static ResourceLocation extend(ResourceLocation rl, String suffix) {
+        return ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), rl.getPath() + suffix);
+    }
+
+    // ------------------------------------------------------------------
+    // D 级 helper 移植：方块状态
+    // ------------------------------------------------------------------
+
     /**
      * 交叉模型（树苗、矮草、花等）：贴图取自身，cutout 渲染层。
      */
@@ -182,14 +203,6 @@ public final class BlockStateGen {
                 block,
                 prov.models().cross(ctx.getName(), prov.blockTexture(block)).renderType("cutout"));
     }
-
-    private static ResourceLocation extend(ResourceLocation rl, String suffix) {
-        return ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), rl.getPath() + suffix);
-    }
-
-    // ------------------------------------------------------------------
-    // D 级 helper 移植：方块状态
-    // ------------------------------------------------------------------
 
     /**
      * 旧 {@code mirroredBlock}：cube_all + cube_mirrored_all 两个模型，方块状态里各出 0°/180°。
@@ -430,18 +443,6 @@ public final class BlockStateGen {
                 .addModels(
                         configuredModel(prov, prov.modLoc("block/" + MiaUtil.getBlockPath(block))));
     }
-
-    /**
-     * 多面附着方块的六个面及其模型旋转（与原版发光地衣的取向一致）。
-     */
-    private static final List<MultifaceFace> MULTIFACE_FACES =
-            List.of(
-                    new MultifaceFace(BlockStateProperties.NORTH, 0, 0),
-                    new MultifaceFace(BlockStateProperties.EAST, 0, 90),
-                    new MultifaceFace(BlockStateProperties.SOUTH, 0, 180),
-                    new MultifaceFace(BlockStateProperties.WEST, 0, 270),
-                    new MultifaceFace(BlockStateProperties.UP, 270, 0),
-                    new MultifaceFace(BlockStateProperties.DOWN, 90, 0));
 
     /**
      * 旧 {@code rotationYBlockState}：0/90/180/270 四个变体。
@@ -868,8 +869,6 @@ public final class BlockStateGen {
                         });
     }
 
-    private record MultifaceFace(BooleanProperty property, int rotationX, int rotationY) {}
-
     /**
      * 旧 {@code makeCropBlock} / {@code states}：按 {@code AGE} 切 {@code block/crop} 模型。
      */
@@ -947,10 +946,6 @@ public final class BlockStateGen {
         return new ConfiguredModel(prov.models().getExistingFile(model), 0, rotationY, false);
     }
 
-    // ------------------------------------------------------------------
-    // 物品模型（只有这几类不能靠 .simpleItem() 自动生成）
-    // ------------------------------------------------------------------
-
     /**
      * 栅栏物品：{@code minecraft:block/fence_inventory} + texture。
      */
@@ -959,6 +954,10 @@ public final class BlockStateGen {
         prov.withExistingParent(ctx.getName(), prov.mcLoc("block/fence_inventory"))
                 .texture("texture", blockTexture(prov, base));
     }
+
+    // ------------------------------------------------------------------
+    // 物品模型（只有这几类不能靠 .simpleItem() 自动生成）
+    // ------------------------------------------------------------------
 
     /**
      * 墙物品：{@code minecraft:block/wall_inventory} + wall 贴图槽。
@@ -988,18 +987,18 @@ public final class BlockStateGen {
     }
 
     /**
-     * ItemModelProvider 没有 {@code blockTexture(Block)}（那是 BlockStateProvider 的），自己按注册名拼。
-     */
-    private static ResourceLocation blockTexture(ReginthItemModelProvider prov, Block block) {
-        return prov.modLoc("block/" + BuiltInRegistries.BLOCK.getKey(block).getPath());
-    }
-
-    /**
      * 树苗/植物/晶簇物品：平面贴图，但用的是**方块**贴图 {@code mia:block/<name>}。
      */
     public static <T extends Item> void bushItem(
             DataGenContext<Item, T> ctx, ReginthItemModelProvider prov) {
         bushItem(ctx, prov, "");
+    }
+
+    /**
+     * ItemModelProvider 没有 {@code blockTexture(Block)}（那是 BlockStateProvider 的），自己按注册名拼。
+     */
+    private static ResourceLocation blockTexture(ReginthItemModelProvider prov, Block block) {
+        return prov.modLoc("block/" + BuiltInRegistries.BLOCK.getKey(block).getPath());
     }
 
     /**
@@ -1077,4 +1076,6 @@ public final class BlockStateGen {
             DataGenContext<Item, T> ctx, ReginthItemModelProvider prov) {
         prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "_bottom"));
     }
+
+    private record MultifaceFace(BooleanProperty property, int rotationX, int rotationY) {}
 }

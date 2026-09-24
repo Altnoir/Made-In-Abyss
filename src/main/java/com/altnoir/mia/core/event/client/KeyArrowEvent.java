@@ -5,9 +5,6 @@ import com.altnoir.mia.common.network.SkillCooldownPayload;
 import com.altnoir.mia.common.network.SkillPlayPayload;
 import com.altnoir.mia.init.MiaComponents;
 import com.altnoir.mia.init.MiaKeyBinding;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -19,6 +16,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class KeyArrowEvent {
     public static final String SKILL_UNSKILL = "skill.mia.unskill";
@@ -434,7 +435,7 @@ public class KeyArrowEvent {
                             baseColor = 0xFFFF00; // 当前技能用黄色
                         } else if (!canMatch) {
                             baseColor = 0x30FFFFFF;
-                            ; // 不可匹配
+                            // 不可匹配
                         }
 
                         // 渲染物品图标

@@ -2,7 +2,6 @@ package com.altnoir.mia.worldgen.processor_list;
 
 import com.altnoir.mia.util.MiaUtil;
 import com.google.common.collect.ImmutableList;
-import java.util.List;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
@@ -11,6 +10,8 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.structure.templatesystem.*;
+
+import java.util.List;
 
 public class MiaProcessorLists {
     public static final ResourceKey<StructureProcessorList> ABYSS_STRONGHOLD_GENERIC_DEGRADATION =

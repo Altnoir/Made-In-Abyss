@@ -2,7 +2,6 @@ package com.altnoir.mia.common.item;
 
 import com.altnoir.mia.common.item.abs.IMiaTooltip;
 import com.altnoir.mia.init.MiaComponents;
-import java.util.List;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlotGroup;
@@ -12,6 +11,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+
+import java.util.List;
 
 public class GrowSwordItem extends SwordItem implements IMiaTooltip {
     public GrowSwordItem(Tier tier, Properties properties) {

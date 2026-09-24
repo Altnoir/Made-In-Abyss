@@ -1,7 +1,6 @@
 package com.altnoir.mia.datagen;
 
 import com.altnoir.mia.init.MiaItems;
-import java.util.function.BiConsumer;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.resources.ResourceKey;
@@ -13,6 +12,8 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.SetStewEffectFunction;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
+
+import java.util.function.BiConsumer;
 
 public record MiaArchaeologyLoot(HolderLookup.Provider registries) implements LootTableSubProvider {
     public static final ResourceKey<LootTable> ABYSS_RUINS =

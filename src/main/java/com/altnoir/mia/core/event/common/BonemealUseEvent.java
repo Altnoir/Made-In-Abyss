@@ -3,7 +3,6 @@ package com.altnoir.mia.core.event.common;
 import com.altnoir.mia.init.MiaBlocks;
 import com.altnoir.mia.init.MiaTags;
 import com.google.common.collect.ImmutableMap.Builder;
-import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -13,6 +12,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
+
+import java.util.Map;
 
 public class BonemealUseEvent {
     public static final Map<Block, Block> COVERGRASS_BLOCKS =

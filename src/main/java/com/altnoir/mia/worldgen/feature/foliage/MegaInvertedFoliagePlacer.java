@@ -68,6 +68,6 @@ public class MegaInvertedFoliagePlacer extends FoliagePlacer {
     @Override
     protected boolean shouldSkipLocation(
             RandomSource random, int localX, int localY, int localZ, int range, boolean large) {
-        return localX + localZ >= 7 ? true : localX * localX + localZ * localZ > range * range;
+        return localX + localZ >= 7 || localX * localX + localZ * localZ > range * range;
     }
 }

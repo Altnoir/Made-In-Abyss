@@ -1,12 +1,13 @@
 package com.altnoir.mia.init;
 
 import com.altnoir.mia.util.MiaUtil;
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.decoration.PaintingVariant;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MiaPaintingVariants {
     /**

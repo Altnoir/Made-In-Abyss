@@ -4,15 +4,8 @@ import com.altnoir.mia.core.spawner.records.AbyssTrialSpawnerPattern;
 import com.altnoir.mia.core.spawner.records.EntityTableInstance;
 import com.altnoir.mia.core.spawner.records.LootTableInstance;
 import com.altnoir.mia.util.MiaUtil;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
+import com.google.gson.*;
 import com.mojang.logging.LogUtils;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.*;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -31,6 +24,10 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.*;
 
 public class AbyssTrialSpawnerManager extends SimpleJsonResourceReloadListener {
     private static final Gson GSON =

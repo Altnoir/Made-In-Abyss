@@ -5,11 +5,6 @@ import com.altnoir.mia.core.spawner.records.EntityTableInstance;
 import com.altnoir.mia.core.spawner.records.LootTableInstance;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -31,6 +26,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootTable;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class AbyssTrialSpawnerDataProvider implements DataProvider {
     private final String modId;
@@ -72,140 +73,13 @@ public abstract class AbyssTrialSpawnerDataProvider implements DataProvider {
         return new EntityTableBuilder(entityType, weight);
     }
 
-    public static class EntityTableBuilder {
-        private final EntityType<?> entityType;
-        private final int weight;
-        private final Map<EquipmentSlot, ItemStack> equipment = new HashMap<>();
-        private final List<MobEffectInstance> effects = new ArrayList<>();
-        private final Map<Holder<Attribute>, AttributeModifier> attributeModifiers =
-                new HashMap<>();
-
-        public EntityTableBuilder(EntityType<?> entityType, int weight) {
-            this.entityType = entityType;
-            this.weight = weight;
-        }
-
-        public EntityTableBuilder equipment(EquipmentSlot slot, Item item) {
-            this.equipment.put(slot, new ItemStack(item));
-            return this;
-        }
-
-        public EntityTableBuilder equipment(EquipmentSlot slot, ItemStack stack) {
-            this.equipment.put(slot, stack);
-            return this;
-        }
-
-        public EntityTableBuilder mainHand(Item item) {
-            return equipment(EquipmentSlot.MAINHAND, item);
-        }
-
-        public EntityTableBuilder offHand(Item item) {
-            return equipment(EquipmentSlot.OFFHAND, item);
-        }
-
-        public EntityTableBuilder head(Item item) {
-            return equipment(EquipmentSlot.HEAD, item);
-        }
-
-        public EntityTableBuilder chest(Item item) {
-            return equipment(EquipmentSlot.CHEST, item);
-        }
-
-        public EntityTableBuilder legs(Item item) {
-            return equipment(EquipmentSlot.LEGS, item);
-        }
-
-        public EntityTableBuilder feet(Item item) {
-            return equipment(EquipmentSlot.FEET, item);
-        }
-
-        public EntityTableBuilder effect(Holder<MobEffect> effect, int duration, int amplifier) {
-            this.effects.add(new MobEffectInstance(effect, duration, amplifier));
-            return this;
-        }
-
-        public EntityTableBuilder effect(Holder<MobEffect> effect, int duration) {
-            return effect(effect, duration, 0);
-        }
-
-        public EntityTableBuilder permanentEffect(Holder<MobEffect> effect, int amplifier) {
-            return effect(effect, -1, amplifier);
-        }
-
-        public EntityTableBuilder permanentEffect(Holder<MobEffect> effect) {
-            return permanentEffect(effect, 0);
-        }
-
-        public EntityTableBuilder attribute(
-                Holder<Attribute> attribute,
-                ResourceLocation id,
-                double amount,
-                AttributeModifier.Operation operation) {
-            this.attributeModifiers.put(attribute, new AttributeModifier(id, amount, operation));
-            return this;
-        }
-
-        public EntityTableBuilder addHealth(String modId, double amount) {
-            return attribute(
-                    Attributes.MAX_HEALTH,
-                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_health"),
-                    amount,
-                    AttributeModifier.Operation.ADD_VALUE);
-        }
-
-        public EntityTableBuilder multiplyHealth(String modId, double multiplier) {
-            return attribute(
-                    Attributes.MAX_HEALTH,
-                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_health"),
-                    multiplier - 1.0,
-                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-        }
-
-        public EntityTableBuilder addDamage(String modId, double amount) {
-            return attribute(
-                    Attributes.ATTACK_DAMAGE,
-                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_damage"),
-                    amount,
-                    AttributeModifier.Operation.ADD_VALUE);
-        }
-
-        public EntityTableBuilder multiplyDamage(String modId, double multiplier) {
-            return attribute(
-                    Attributes.ATTACK_DAMAGE,
-                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_damage"),
-                    multiplier - 1.0,
-                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-        }
-
-        public EntityTableBuilder addSpeed(String modId, double amount) {
-            return attribute(
-                    Attributes.MOVEMENT_SPEED,
-                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_speed"),
-                    amount,
-                    AttributeModifier.Operation.ADD_VALUE);
-        }
-
-        public EntityTableBuilder multiplySpeed(String modId, double multiplier) {
-            return attribute(
-                    Attributes.MOVEMENT_SPEED,
-                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_speed"),
-                    multiplier - 1.0,
-                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-        }
-
-        public EntityTableInstance build() {
-            return new EntityTableInstance(
-                    entityType, weight, equipment, effects, attributeModifiers);
-        }
+    protected LootTableInstance loot(ResourceLocation lootTableId, int weight) {
+        return new LootTableInstance(
+                ResourceKey.create(Registries.LOOT_TABLE, lootTableId), weight);
     }
 
     protected LootTableInstance loot(ResourceKey<LootTable> lootTableKey, int weight) {
         return new LootTableInstance(lootTableKey, weight);
-    }
-
-    protected LootTableInstance loot(ResourceLocation lootTableId, int weight) {
-        return new LootTableInstance(
-                ResourceKey.create(Registries.LOOT_TABLE, lootTableId), weight);
     }
 
     protected LootTableInstance loot(String namespace, String path, int weight) {
@@ -353,6 +227,133 @@ public abstract class AbyssTrialSpawnerDataProvider implements DataProvider {
 
                     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
                 });
+    }
+
+    public static class EntityTableBuilder {
+        private final EntityType<?> entityType;
+        private final int weight;
+        private final Map<EquipmentSlot, ItemStack> equipment = new HashMap<>();
+        private final List<MobEffectInstance> effects = new ArrayList<>();
+        private final Map<Holder<Attribute>, AttributeModifier> attributeModifiers =
+                new HashMap<>();
+
+        public EntityTableBuilder(EntityType<?> entityType, int weight) {
+            this.entityType = entityType;
+            this.weight = weight;
+        }
+
+        public EntityTableBuilder equipment(EquipmentSlot slot, Item item) {
+            this.equipment.put(slot, new ItemStack(item));
+            return this;
+        }
+
+        public EntityTableBuilder equipment(EquipmentSlot slot, ItemStack stack) {
+            this.equipment.put(slot, stack);
+            return this;
+        }
+
+        public EntityTableBuilder mainHand(Item item) {
+            return equipment(EquipmentSlot.MAINHAND, item);
+        }
+
+        public EntityTableBuilder offHand(Item item) {
+            return equipment(EquipmentSlot.OFFHAND, item);
+        }
+
+        public EntityTableBuilder head(Item item) {
+            return equipment(EquipmentSlot.HEAD, item);
+        }
+
+        public EntityTableBuilder chest(Item item) {
+            return equipment(EquipmentSlot.CHEST, item);
+        }
+
+        public EntityTableBuilder legs(Item item) {
+            return equipment(EquipmentSlot.LEGS, item);
+        }
+
+        public EntityTableBuilder feet(Item item) {
+            return equipment(EquipmentSlot.FEET, item);
+        }
+
+        public EntityTableBuilder effect(Holder<MobEffect> effect, int duration, int amplifier) {
+            this.effects.add(new MobEffectInstance(effect, duration, amplifier));
+            return this;
+        }
+
+        public EntityTableBuilder effect(Holder<MobEffect> effect, int duration) {
+            return effect(effect, duration, 0);
+        }
+
+        public EntityTableBuilder permanentEffect(Holder<MobEffect> effect, int amplifier) {
+            return effect(effect, -1, amplifier);
+        }
+
+        public EntityTableBuilder permanentEffect(Holder<MobEffect> effect) {
+            return permanentEffect(effect, 0);
+        }
+
+        public EntityTableBuilder attribute(
+                Holder<Attribute> attribute,
+                ResourceLocation id,
+                double amount,
+                AttributeModifier.Operation operation) {
+            this.attributeModifiers.put(attribute, new AttributeModifier(id, amount, operation));
+            return this;
+        }
+
+        public EntityTableBuilder addHealth(String modId, double amount) {
+            return attribute(
+                    Attributes.MAX_HEALTH,
+                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_health"),
+                    amount,
+                    AttributeModifier.Operation.ADD_VALUE);
+        }
+
+        public EntityTableBuilder multiplyHealth(String modId, double multiplier) {
+            return attribute(
+                    Attributes.MAX_HEALTH,
+                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_health"),
+                    multiplier - 1.0,
+                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        }
+
+        public EntityTableBuilder addDamage(String modId, double amount) {
+            return attribute(
+                    Attributes.ATTACK_DAMAGE,
+                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_damage"),
+                    amount,
+                    AttributeModifier.Operation.ADD_VALUE);
+        }
+
+        public EntityTableBuilder multiplyDamage(String modId, double multiplier) {
+            return attribute(
+                    Attributes.ATTACK_DAMAGE,
+                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_damage"),
+                    multiplier - 1.0,
+                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        }
+
+        public EntityTableBuilder addSpeed(String modId, double amount) {
+            return attribute(
+                    Attributes.MOVEMENT_SPEED,
+                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_speed"),
+                    amount,
+                    AttributeModifier.Operation.ADD_VALUE);
+        }
+
+        public EntityTableBuilder multiplySpeed(String modId, double multiplier) {
+            return attribute(
+                    Attributes.MOVEMENT_SPEED,
+                    ResourceLocation.fromNamespaceAndPath(modId, "trial_spawner_speed"),
+                    multiplier - 1.0,
+                    AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        }
+
+        public EntityTableInstance build() {
+            return new EntityTableInstance(
+                    entityType, weight, equipment, effects, attributeModifiers);
+        }
     }
 
     @Override

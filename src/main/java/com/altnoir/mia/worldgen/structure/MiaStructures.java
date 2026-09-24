@@ -2,19 +2,9 @@ package com.altnoir.mia.worldgen.structure;
 
 import com.altnoir.mia.init.MiaTags;
 import com.altnoir.mia.util.MiaUtil;
-import com.altnoir.mia.worldgen.structure.pools.AbyssStrongholdPools;
-import com.altnoir.mia.worldgen.structure.pools.AbyssSurfacePools;
-import com.altnoir.mia.worldgen.structure.pools.AbyssWindmillPools;
-import com.altnoir.mia.worldgen.structure.pools.CaveRaiderHutPools;
-import com.altnoir.mia.worldgen.structure.pools.CompassRuinsPools;
-import com.altnoir.mia.worldgen.structure.pools.PetrifiedShipPools;
+import com.altnoir.mia.worldgen.structure.pools.*;
 import com.altnoir.mia.worldgen.structure.wall.AbyssWallPlanConfig;
 import com.altnoir.mia.worldgen.structure.wall.AbyssWindmillStructure;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
@@ -37,6 +27,12 @@ import net.minecraft.world.level.levelgen.structure.pools.DimensionPadding;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.structures.JigsawStructure;
 import net.minecraft.world.level.levelgen.structure.templatesystem.LiquidSettings;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class MiaStructures {
     public static final ResourceKey<Structure> ANCIENT_BABYLON_COMPASS_RUINS =

@@ -8,10 +8,11 @@ import com.altnoir.mia.init.MiaPotions;
 import com.altnoir.mia.init.MiaStats;
 import com.altnoir.mia.util.FilesHelper;
 import com.altnoir.mia.worldgen.biome.MiaBiomes;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.biome.Biome;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * MIA 的语言键数据（迁移到 Reginth 之后）。

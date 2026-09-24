@@ -1,7 +1,6 @@
 package com.altnoir.mia.mixin;
 
 import com.altnoir.mia.worldgen.dimension.MiaDimensions;
-import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
@@ -16,6 +15,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Set;
 
 @Mixin(Minecraft.class)
 public class MinecraftMixin {

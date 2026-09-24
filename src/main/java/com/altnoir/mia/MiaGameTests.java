@@ -15,27 +15,13 @@ import com.altnoir.mia.worldgen.structure.wall.AbyssWallPlanner;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
-import java.util.Set;
-import java.util.function.IntPredicate;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.FrontAndTop;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.gametest.framework.*;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtAccounter;
-import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.Tag;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.*;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BiomeTags;
@@ -60,6 +46,13 @@ import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.RegisterGameTestsEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.function.IntPredicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @GameTestHolder(MIA.MOD_ID)
 public class MiaGameTests {
@@ -1149,9 +1142,6 @@ public class MiaGameTests {
         helper.assertValueEqual(actualElements, expectedElements, path + " elements");
     }
 
-    private record JigsawContract(
-            BlockPos pos, FrontAndTop orientation, String name, String target, String pool) {}
-
     private static void assertStructureTemplateSize(
             GameTestHelper helper, String path, Vec3i expectedSize) {
         StructureTemplate template =
@@ -1479,6 +1469,9 @@ public class MiaGameTests {
                 "mia:abyss_andesite",
                 path + " anchor final state");
     }
+
+    private record JigsawContract(
+            BlockPos pos, FrontAndTop orientation, String name, String target, String pool) {}
 
     public static void register(RegisterGameTestsEvent event) {
         event.register(MiaGameTests.class);

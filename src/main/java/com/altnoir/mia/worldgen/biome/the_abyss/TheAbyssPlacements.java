@@ -5,7 +5,6 @@ import com.altnoir.mia.worldgen.place.InvertedCountOnEveryLayerPlacement;
 import com.altnoir.mia.worldgen.place.TreeOnEveryLayerPlacement;
 import com.altnoir.mia.worldgen.place.WaterOnEveryLayerPlacement;
 import com.google.common.collect.ImmutableList;
-import java.util.List;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
@@ -22,6 +21,8 @@ import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.placement.*;
+
+import java.util.List;
 
 public class TheAbyssPlacements {
     public static final ResourceKey<PlacedFeature> MONSTER_CHEAT = theAbyssKey("monster_cheat");

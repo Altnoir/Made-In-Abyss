@@ -2,7 +2,6 @@ package com.altnoir.mia.worldgen.biome.great_fault;
 
 import com.altnoir.mia.init.MiaBlocks;
 import com.altnoir.mia.worldgen.MiaFeatureUtils;
-import java.util.List;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
@@ -26,6 +25,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.GeodeConfigurat
 import net.minecraft.world.level.levelgen.feature.configurations.SimpleRandomFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+
+import java.util.List;
 
 public class GreatFaultFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> ABYSS_LIGHT =

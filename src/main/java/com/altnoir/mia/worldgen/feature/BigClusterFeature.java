@@ -2,8 +2,6 @@ package com.altnoir.mia.worldgen.feature;
 
 import com.altnoir.mia.worldgen.feature.configurations.ClusterConfiguration;
 import com.mojang.serialization.Codec;
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -13,6 +11,9 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.material.Fluids;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BigClusterFeature extends Feature<ClusterConfiguration> {
     public BigClusterFeature(Codec<ClusterConfiguration> codec) {
@@ -33,8 +34,8 @@ public class BigClusterFeature extends Feature<ClusterConfiguration> {
                 break;
             }
         }
-        int size = cl.size.sample(randomsource);
-        int height = cl.height.sample(randomsource);
+        int size = cl.size().sample(randomsource);
+        int height = cl.height().sample(randomsource);
         int maxSize = Math.max(1, size / 2);
         int maxHeight = Math.max(1, height / 2);
 
@@ -53,18 +54,18 @@ public class BigClusterFeature extends Feature<ClusterConfiguration> {
 
                 if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) <= 1.0) {
                     worldgenlevel.setBlock(
-                            blockpos1, cl.stateProvider.getState(randomsource, blockpos1), 4);
+                            blockpos1, cl.stateProvider().getState(randomsource, blockpos1), 4);
                     placedPositions.add(blockpos1.immutable());
                 }
             }
             for (BlockPos blockpos2 : placedPositions) {
-                if (randomsource.nextFloat() >= cl.crystalChance) continue;
+                if (randomsource.nextFloat() >= cl.crystalChance()) continue;
 
                 BlockPos crystalPos1 =
                         getCrystalPosition(worldgenlevel, blockpos2.below(), randomsource);
                 if (tryPlaceCrystalDown(worldgenlevel, crystalPos1)) {
                     BlockState crystalState =
-                            cl.crystalStateProviderDown.getState(randomsource, crystalPos1);
+                            cl.crystalStateProviderDown().getState(randomsource, crystalPos1);
 
                     if (crystalState.hasProperty(BlockStateProperties.WATERLOGGED)) {
                         crystalState =
@@ -80,7 +81,7 @@ public class BigClusterFeature extends Feature<ClusterConfiguration> {
                         getCrystalPosition(worldgenlevel, blockpos2.above(), randomsource);
                 if (tryPlaceCrystalUp(worldgenlevel, crystalPos2)) {
                     BlockState crystalState =
-                            cl.crystalStateProviderUp.getState(randomsource, crystalPos2);
+                            cl.crystalStateProviderUp().getState(randomsource, crystalPos2);
 
                     if (crystalState.hasProperty(BlockStateProperties.WATERLOGGED)) {
                         crystalState =

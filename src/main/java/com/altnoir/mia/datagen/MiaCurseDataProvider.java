@@ -4,10 +4,11 @@ import com.altnoir.mia.MIA;
 import com.altnoir.mia.core.curse.CurseDataProvider;
 import com.altnoir.mia.core.curse.records.CurseEffect;
 import com.altnoir.mia.worldgen.dimension.MiaDimensions;
-import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.world.effect.MobEffects;
+
+import java.util.concurrent.CompletableFuture;
 
 public class MiaCurseDataProvider extends CurseDataProvider {
     public MiaCurseDataProvider(

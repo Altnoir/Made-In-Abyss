@@ -5,7 +5,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 
-public class MonsterCheatConfiguration implements FeatureConfiguration {
+public record MonsterCheatConfiguration(BlockStateProvider coreStateProvider,
+                                        BlockStateProvider outerStateProvider) implements FeatureConfiguration {
     public static final Codec<MonsterCheatConfiguration> CODEC =
             RecordCodecBuilder.create(
                     instance ->
@@ -18,12 +19,4 @@ public class MonsterCheatConfiguration implements FeatureConfiguration {
                                                     .forGetter(config -> config.outerStateProvider))
                                     .apply(instance, MonsterCheatConfiguration::new));
 
-    public final BlockStateProvider coreStateProvider;
-    public final BlockStateProvider outerStateProvider;
-
-    public MonsterCheatConfiguration(
-            BlockStateProvider coreStateProvider, BlockStateProvider outerStateProvider) {
-        this.coreStateProvider = coreStateProvider;
-        this.outerStateProvider = outerStateProvider;
-    }
 }

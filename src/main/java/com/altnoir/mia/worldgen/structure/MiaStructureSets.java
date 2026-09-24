@@ -3,7 +3,6 @@ package com.altnoir.mia.worldgen.structure;
 import com.altnoir.mia.util.MiaUtil;
 import com.altnoir.mia.worldgen.structure.wall.AbyssWallPlanConfig;
 import com.altnoir.mia.worldgen.structure.wall.AbyssWallStructurePlacement;
-import java.util.List;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
@@ -15,6 +14,8 @@ import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
+
+import java.util.List;
 
 public interface MiaStructureSets {
     ResourceKey<StructureSet> ANCIENT_JUNGLE_COMPASS_RUINS =

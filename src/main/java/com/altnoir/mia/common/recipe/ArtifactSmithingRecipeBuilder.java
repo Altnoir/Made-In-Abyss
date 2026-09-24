@@ -1,7 +1,6 @@
 package com.altnoir.mia.common.recipe;
 
 import com.altnoir.mia.util.MiaUtil;
-import java.util.*;
 import net.minecraft.advancements.*;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger;
 import net.minecraft.advancements.critereon.InventoryChangeTrigger.TriggerInstance.Slots;
@@ -17,6 +16,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
+
+import java.util.*;
 
 public class ArtifactSmithingRecipeBuilder {
     private final Ingredient whistle;
@@ -119,7 +120,7 @@ public class ArtifactSmithingRecipeBuilder {
     private void ensureValid(ResourceLocation location) {
         if (this.criteria.isEmpty()) {
             throw new IllegalStateException(
-                    "No way of obtaining recipe " + String.valueOf(location));
+                    "No way of obtaining recipe " + location);
         }
     }
 }

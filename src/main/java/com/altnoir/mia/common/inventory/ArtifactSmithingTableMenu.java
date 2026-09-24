@@ -9,8 +9,6 @@ import com.altnoir.mia.init.MiaBlocks;
 import com.altnoir.mia.init.MiaComponents;
 import com.altnoir.mia.init.MiaMenus;
 import com.altnoir.mia.init.MiaRecipes;
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -20,6 +18,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ArtifactSmithingTableMenu extends AbstractContainerMenu {
     private static final int ARTIFACT_SLOT_INDEX = 0;
@@ -237,7 +238,7 @@ public class ArtifactSmithingTableMenu extends AbstractContainerMenu {
     @Override
     public @NotNull ItemStack quickMoveStack(Player player, int index) {
         ItemStack returnStack = ItemStack.EMPTY;
-        Slot slot = (Slot) this.slots.get(index);
+        Slot slot = this.slots.get(index);
         if (slot != null && slot.hasItem()) {
             ItemStack selectedStack = slot.getItem();
             Item item = selectedStack.getItem();
@@ -362,11 +363,9 @@ public class ArtifactSmithingTableMenu extends AbstractContainerMenu {
                     .anyMatch(recipe -> recipe.value().isArtifactIngredient(artifactSlotItem))) {
                 return false;
             }
-            if (artifactSlotItem.get(MiaComponents.ARTIFACT_ENHANCEMENT.get())
-                            instanceof ArtifactEnhancementComponent stats
-                    && stats.getLevel() < artifactType.getMaxLevel()) {
-                return true;
-            }
+            return artifactSlotItem.get(MiaComponents.ARTIFACT_ENHANCEMENT.get())
+                    instanceof ArtifactEnhancementComponent stats
+                    && stats.getLevel() < artifactType.getMaxLevel();
         }
 
         return false;

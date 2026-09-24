@@ -8,7 +8,6 @@ import com.altnoir.mia.worldgen.MiaFeatureUtils;
 import com.altnoir.mia.worldgen.feature.LakeFeature;
 import com.altnoir.mia.worldgen.feature.configurations.*;
 import com.altnoir.mia.worldgen.feature.tree.MiaTreePlacements;
-import java.util.List;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
@@ -43,6 +42,8 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.RuleTest;
 import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import net.minecraft.world.level.material.Fluids;
+
+import java.util.List;
 
 public class TheAbyssFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> MONSTER_CHEAT =

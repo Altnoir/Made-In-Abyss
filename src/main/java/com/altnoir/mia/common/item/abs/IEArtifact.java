@@ -3,8 +3,6 @@ package com.altnoir.mia.common.item.abs;
 import com.altnoir.mia.common.component.ArtifactEnhancementComponent;
 import com.altnoir.mia.init.MiaComponents;
 import com.google.common.collect.Multimap;
-import java.util.List;
-import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
@@ -14,9 +12,12 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
 import top.theillusivec4.curios.api.SlotContext;
 
+import java.util.List;
+import java.util.Optional;
+
 public interface IEArtifact extends IArtifactItem, IBundleable {
-    public static final String TOOLTIP_ARTIFACT_LEVEL = "tooltip.mia.artifact.level";
-    public static final String TOOLTIP_ARTIFACT_MAX = "tooltip.mia.artifact.max";
+    String TOOLTIP_ARTIFACT_LEVEL = "tooltip.mia.artifact.level";
+    String TOOLTIP_ARTIFACT_MAX = "tooltip.mia.artifact.max";
 
     default int getMaxLevel() {
         return switch (getGrade()) {

@@ -1,8 +1,6 @@
 package com.altnoir.mia.common.block;
 
 import com.altnoir.mia.init.MiaBlocks;
-import java.util.Collection;
-import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -28,6 +26,9 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
+import java.util.Collection;
+
 public class HopperFarmBlock extends FarmBlock {
     public HopperFarmBlock(BlockBehaviour.Properties properties) {
         super(properties);
@@ -46,6 +47,31 @@ public class HopperFarmBlock extends FarmBlock {
             turnToBlock(null, state, level, pos);
         }
         cropDrop(level, pos);
+    }
+
+    private static boolean isNearWater(LevelReader level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        for (BlockPos blockpos :
+                BlockPos.betweenClosed(pos.offset(-3, 0, -3), pos.offset(3, 1, 3))) {
+            if (state.canBeHydrated(level, pos, level.getFluidState(blockpos), blockpos)) {
+                return true;
+            }
+        }
+
+        return net.neoforged.neoforge.common.FarmlandWaterManager.hasBlockWaterTicket(level, pos);
+    }
+
+    public static void turnToBlock(
+            @Nullable Entity entity, BlockState state, Level level, BlockPos pos) {
+        BlockState blockstate =
+                pushEntitiesUp(
+                        state, MiaBlocks.ABYSS_ANDESITE.get().defaultBlockState(), level, pos);
+        level.setBlockAndUpdate(pos, blockstate);
+        level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(entity, blockstate));
+    }
+
+    private static boolean shouldMaintainFarmland(BlockGetter level, BlockPos pos) {
+        return level.getBlockState(pos.above()).is(BlockTags.MAINTAINS_FARMLAND);
     }
 
     @Override
@@ -128,36 +154,11 @@ public class HopperFarmBlock extends FarmBlock {
         }
     }
 
-    private static boolean shouldMaintainFarmland(BlockGetter level, BlockPos pos) {
-        return level.getBlockState(pos.above()).is(BlockTags.MAINTAINS_FARMLAND);
-    }
-
-    private static boolean isNearWater(LevelReader level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
-        for (BlockPos blockpos :
-                BlockPos.betweenClosed(pos.offset(-3, 0, -3), pos.offset(3, 1, 3))) {
-            if (state.canBeHydrated(level, pos, level.getFluidState(blockpos), blockpos)) {
-                return true;
-            }
-        }
-
-        return net.neoforged.neoforge.common.FarmlandWaterManager.hasBlockWaterTicket(level, pos);
-    }
-
     @Override
     public void fallOn(
             Level level, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
         if (!level.isClientSide) {
             entity.causeFallDamage(fallDistance, 1.0F, entity.damageSources().fall());
         }
-    }
-
-    public static void turnToBlock(
-            @Nullable Entity entity, BlockState state, Level level, BlockPos pos) {
-        BlockState blockstate =
-                pushEntitiesUp(
-                        state, MiaBlocks.ABYSS_ANDESITE.get().defaultBlockState(), level, pos);
-        level.setBlockAndUpdate(pos, blockstate);
-        level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(entity, blockstate));
     }
 }

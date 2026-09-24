@@ -6,7 +6,6 @@ import com.altnoir.mia.common.recipe.LampTubeRecipe;
 import com.altnoir.mia.common.recipe.LampTubeRecipeInput;
 import com.altnoir.mia.init.MiaRecipes;
 import com.mojang.serialization.MapCodec;
-import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -24,6 +23,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
+
+import java.util.Optional;
 
 public class AmethystTubeBlock extends AbsCrystalTubeBlock {
     public static final MapCodec<AmethystTubeBlock> CODEC = simpleCodec(AmethystTubeBlock::new);

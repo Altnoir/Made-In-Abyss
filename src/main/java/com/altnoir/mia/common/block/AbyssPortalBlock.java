@@ -211,10 +211,10 @@ public class AbyssPortalBlock extends Block implements Portal {
             if (!level.getBlockState(pos.west()).is(this)
                     && !level.getBlockState(pos.east()).is(this)) {
                 d0 = (double) pos.getX() + 0.5 + 0.25 * (double) j;
-                d3 = (double) (random.nextFloat() * 2.0F * (float) j);
+                d3 = random.nextFloat() * 2.0F * (float) j;
             } else {
                 d2 = (double) pos.getZ() + 0.5 + 0.25 * (double) j;
-                d5 = (double) (random.nextFloat() * 2.0F * (float) j);
+                d5 = random.nextFloat() * 2.0F * (float) j;
             }
 
             level.addParticle(ParticleTypes.GLOW, d0, d1, d2, d3, d4, d5);

@@ -1,13 +1,14 @@
 package com.altnoir.mia.common.item;
 
 import com.altnoir.mia.common.item.abs.AbsSkill;
-import java.util.Arrays;
-import java.util.List;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class HasteSkill extends AbsSkill {
     public HasteSkill(Properties properties) {

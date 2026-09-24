@@ -5,8 +5,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import java.util.List;
-import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
@@ -23,6 +21,9 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.pools.alias.PoolAliasBinding;
 import net.minecraft.world.level.levelgen.structure.pools.alias.PoolAliasLookup;
 import net.minecraft.world.level.levelgen.structure.templatesystem.LiquidSettings;
+
+import java.util.List;
+import java.util.Optional;
 
 public class MiaJigsawStructure extends Structure {
     public static final DimensionPadding DEFAULT_DIMENSION_PADDING = DimensionPadding.ZERO;
@@ -111,18 +112,6 @@ public class MiaJigsawStructure extends Structure {
     private final List<PoolAliasBinding> poolAliases;
     private final DimensionPadding dimensionPadding;
     private final LiquidSettings liquidSettings;
-
-    private static DataResult<MiaJigsawStructure> verifyRange(MiaJigsawStructure structure) {
-        int i =
-                switch (structure.terrainAdaptation()) {
-                    case NONE -> 0;
-                    case BURY, BEARD_THIN, BEARD_BOX, ENCAPSULATE -> 12;
-                };
-        return structure.maxDistanceFromCenter + i > MAX_TOTAL_STRUCTURE_RANGE
-                ? DataResult.error(
-                        () -> "Structure size including terrain adaptation must not exceed 256")
-                : DataResult.success(structure);
-    }
 
     public MiaJigsawStructure(
             Structure.StructureSettings settings,
@@ -250,6 +239,18 @@ public class MiaJigsawStructure extends Structure {
                 List.of(),
                 DEFAULT_DIMENSION_PADDING,
                 DEFAULT_LIQUID_SETTINGS);
+    }
+
+    private static DataResult<MiaJigsawStructure> verifyRange(MiaJigsawStructure structure) {
+        int i =
+                switch (structure.terrainAdaptation()) {
+                    case NONE -> 0;
+                    case BURY, BEARD_THIN, BEARD_BOX, ENCAPSULATE -> 12;
+                };
+        return structure.maxDistanceFromCenter + i > MAX_TOTAL_STRUCTURE_RANGE
+                ? DataResult.error(
+                        () -> "Structure size including terrain adaptation must not exceed 256")
+                : DataResult.success(structure);
     }
 
     @Override

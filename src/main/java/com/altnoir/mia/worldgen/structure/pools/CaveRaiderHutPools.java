@@ -2,8 +2,6 @@ package com.altnoir.mia.worldgen.structure.pools;
 
 import com.altnoir.mia.worldgen.MiaSructurePoolUtils;
 import com.mojang.datafixers.util.Pair;
-import java.util.List;
-import java.util.function.Function;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
@@ -12,6 +10,9 @@ import net.minecraft.data.worldgen.Pools;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
+
+import java.util.List;
+import java.util.function.Function;
 
 public final class CaveRaiderHutPools {
     public static final ResourceKey<StructureTemplatePool> START =

@@ -9,8 +9,6 @@ import com.altnoir.mia.worldgen.feature.foliage.MegaInvertedFoliagePlacer;
 import com.altnoir.mia.worldgen.feature.trunk.InvertedForkingTrunkPlacer;
 import com.altnoir.mia.worldgen.feature.trunk.InvertedGiantTrunkPlacer;
 import com.google.common.collect.ImmutableList;
-import java.util.List;
-import java.util.Optional;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
@@ -40,6 +38,9 @@ import net.minecraft.world.level.levelgen.feature.trunkplacers.CherryTrunkPlacer
 import net.minecraft.world.level.levelgen.feature.trunkplacers.ForkingTrunkPlacer;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.MegaJungleTrunkPlacer;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.StraightTrunkPlacer;
+
+import java.util.List;
+import java.util.Optional;
 
 public class MiaTreeFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> SKYFOG_TREE = treeKey("skyfog_tree");

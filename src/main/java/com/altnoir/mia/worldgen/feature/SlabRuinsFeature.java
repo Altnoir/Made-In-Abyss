@@ -6,7 +6,6 @@ import com.altnoir.mia.init.MiaBlocks;
 import com.altnoir.mia.init.worldgen.MiaFeatures;
 import com.altnoir.mia.worldgen.feature.configurations.SlabRuinsConfiguration;
 import com.mojang.serialization.Codec;
-import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
@@ -14,6 +13,8 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
+
+import java.util.function.Predicate;
 
 public class SlabRuinsFeature extends Feature<SlabRuinsConfiguration> {
     public SlabRuinsFeature(Codec<SlabRuinsConfiguration> codec) {
@@ -45,13 +46,13 @@ public class SlabRuinsFeature extends Feature<SlabRuinsConfiguration> {
             for (int x = 0; x < 2; x++) {
                 for (int z = 0; z < 2; z++) {
                     muPos.set(blockpos.getX() + x, blockpos.getY(), blockpos.getZ() + z);
-                    BlockState slabState = src.slabStateProvider.getState(randomsource, muPos);
+                    BlockState slabState = src.slabStateProvider().getState(randomsource, muPos);
                     if (worldgenlevel.getBlockState(muPos).isAir()) {
                         this.safeSetBlock(worldgenlevel, muPos, slabState, predicate);
                     }
 
                     muPos.move(0, -1, 0);
-                    BlockState blockState = src.blockStateProvider.getState(randomsource, muPos);
+                    BlockState blockState = src.blockStateProvider().getState(randomsource, muPos);
                     this.safeSetBlock(worldgenlevel, muPos, blockState, predicate);
 
                     muPos.move(0, 1, 0);
@@ -68,7 +69,7 @@ public class SlabRuinsFeature extends Feature<SlabRuinsConfiguration> {
                                 blockpos.getY(),
                                 blockpos.getZ() + offsetZ);
                         BlockState extraSlabState =
-                                src.slabStateProvider.getState(randomsource, muPos);
+                                src.slabStateProvider().getState(randomsource, muPos);
                         if (worldgenlevel.getBlockState(muPos).isAir()
                                 && !worldgenlevel.getBlockState(muPos.below()).isAir()) {
                             this.safeSetBlock(worldgenlevel, muPos, extraSlabState, predicate);

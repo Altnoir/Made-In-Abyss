@@ -2,7 +2,6 @@ package com.altnoir.mia.common.block;
 
 import com.altnoir.mia.common.block.abs.AbsCrystalTubeBlock;
 import com.mojang.serialization.MapCodec;
-import java.util.concurrent.atomic.AtomicBoolean;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.BoneMealItem;
@@ -15,6 +14,8 @@ import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PrasioliteTubeBlock extends AbsCrystalTubeBlock {
     public static final IntegerProperty LEVEL = IntegerProperty.create("level", 1, 4);

@@ -5,7 +5,6 @@ import com.altnoir.abysslib.creative.ALSectionedCreativeModeTab;
 import com.altnoir.abysslib.creative.ALTitlePlate;
 import com.altnoir.mia.init.MiaBlocks;
 import com.altnoir.mia.init.MiaItems;
-import java.util.function.Supplier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -13,6 +12,8 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.function.Supplier;
 
 /**
  * MIA 的创造栏：**一个标签页 + 五个分区**（AbyssLib 的"分区式创造栏"）。

@@ -2,7 +2,6 @@ package com.altnoir.mia.worldgen.structure.pools;
 
 import com.altnoir.mia.worldgen.MiaSructurePoolUtils;
 import com.mojang.datafixers.util.Pair;
-import java.util.List;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
@@ -10,6 +9,8 @@ import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.Pools;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
+
+import java.util.List;
 
 public final class AbyssSurfacePools {
     public static final ResourceKey<StructureTemplatePool> ABYSSAL_RUINS_01 =

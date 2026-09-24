@@ -2,9 +2,6 @@ package com.altnoir.mia.worldgen;
 
 import com.altnoir.mia.util.MiaUtil;
 import com.mojang.datafixers.util.Either;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.structure.pools.SinglePoolElement;
@@ -12,6 +9,10 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.templatesystem.LiquidSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 public class MiaSructurePoolUtils extends SinglePoolElement {
     private static final Holder<StructureProcessorList> EMPTY =

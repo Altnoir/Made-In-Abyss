@@ -5,13 +5,14 @@ import com.altnoir.mia.MiaConfig;
 import com.altnoir.mia.client.network.CurseCapabilityPayload;
 import com.altnoir.mia.init.MiaCapabilities;
 import com.altnoir.mia.util.MiaUtil;
-import java.util.HashMap;
-import java.util.UUID;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
+
+import java.util.HashMap;
+import java.util.UUID;
 
 public class CurseEvent {
     private static final HashMap<UUID, Double> playerMinY = new HashMap<>();

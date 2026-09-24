@@ -6,7 +6,6 @@ import com.altnoir.mia.worldgen.biome.MiaBiomes;
 import com.altnoir.mia.worldgen.biomesource.AbyssNoiseBiomeSource;
 import com.altnoir.mia.worldgen.noise_setting.MiaNoiseGeneratorSettings;
 import com.mojang.datafixers.util.Pair;
-import java.util.List;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.Registries;
@@ -19,6 +18,8 @@ import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+
+import java.util.List;
 
 public class MiaDimensions {
     public static final ResourceKey<LevelStem> THE_ABYSS =

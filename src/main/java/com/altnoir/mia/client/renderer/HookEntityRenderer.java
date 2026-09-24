@@ -29,6 +29,47 @@ public class HookEntityRenderer extends EntityRenderer<HookEntity> {
         super(context);
     }
 
+    private static float fraction(int numerator, int denominator) {
+        return (float) numerator / (float) denominator;
+    }
+
+    private static void vertex(
+            VertexConsumer consumer,
+            PoseStack.Pose pose,
+            int packedLight,
+            float x,
+            int y,
+            int u,
+            int v) {
+        consumer.addVertex(pose, x - 0.5F, (float) y - 0.5F, 0.0F)
+                .setColor(-1)
+                .setUv((float) u, (float) v)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(packedLight)
+                .setNormal(pose, 0.0F, 1.0F, 0.0F);
+    }
+
+    private static void stringVertex(
+            float x,
+            float y,
+            float z,
+            VertexConsumer consumer,
+            PoseStack.Pose pose,
+            float stringFraction,
+            float nextStringFraction) {
+        float f = x * stringFraction;
+        float f1 = y * stringFraction;
+        float f2 = z * stringFraction;
+        float f3 = x * nextStringFraction - f;
+        float f4 = y * nextStringFraction - f1;
+        float f5 = z * nextStringFraction - f2;
+        float f6 = Mth.sqrt(f3 * f3 + f4 * f4 + f5 * f5);
+        f3 /= f6;
+        f4 /= f6;
+        f5 /= f6;
+        consumer.addVertex(pose, f, f1, f2).setColor(0xFF29363D).setNormal(pose, f3, f4, f5);
+    }
+
     public void render(
             HookEntity entity,
             float entityYaw,
@@ -110,47 +151,6 @@ public class HookEntityRenderer extends EntityRenderer<HookEntity> {
             return player.getEyePosition(partialTick)
                     .add(-d1 * d2 - d0 * d3, (double) f2 - 0.45 * (double) f1, -d0 * d2 + d1 * d3);
         }
-    }
-
-    private static float fraction(int numerator, int denominator) {
-        return (float) numerator / (float) denominator;
-    }
-
-    private static void vertex(
-            VertexConsumer consumer,
-            PoseStack.Pose pose,
-            int packedLight,
-            float x,
-            int y,
-            int u,
-            int v) {
-        consumer.addVertex(pose, x - 0.5F, (float) y - 0.5F, 0.0F)
-                .setColor(-1)
-                .setUv((float) u, (float) v)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(packedLight)
-                .setNormal(pose, 0.0F, 1.0F, 0.0F);
-    }
-
-    private static void stringVertex(
-            float x,
-            float y,
-            float z,
-            VertexConsumer consumer,
-            PoseStack.Pose pose,
-            float stringFraction,
-            float nextStringFraction) {
-        float f = x * stringFraction;
-        float f1 = y * stringFraction;
-        float f2 = z * stringFraction;
-        float f3 = x * nextStringFraction - f;
-        float f4 = y * nextStringFraction - f1;
-        float f5 = z * nextStringFraction - f2;
-        float f6 = Mth.sqrt(f3 * f3 + f4 * f4 + f5 * f5);
-        f3 /= f6;
-        f4 /= f6;
-        f5 /= f6;
-        consumer.addVertex(pose, f, f1, f2).setColor(0xFF29363D).setNormal(pose, f3, f4, f5);
     }
 
     public ResourceLocation getTextureLocation(HookEntity entity) {

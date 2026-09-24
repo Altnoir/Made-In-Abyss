@@ -3,7 +3,6 @@ package com.altnoir.mia.compat.curios;
 // 新增导入Curios API相关类
 
 import com.altnoir.mia.MIA;
-import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
@@ -12,6 +11,8 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import top.theillusivec4.curios.api.CuriosDataProvider;
 import top.theillusivec4.curios.api.type.data.IEntitiesData;
 import top.theillusivec4.curios.api.type.data.ISlotData;
+
+import java.util.concurrent.CompletableFuture;
 
 public class MiaCuriosProvider extends CuriosDataProvider {
 

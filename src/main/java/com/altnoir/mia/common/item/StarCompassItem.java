@@ -4,7 +4,6 @@ import com.altnoir.mia.client.network.CompassTargetPayload;
 import com.altnoir.mia.common.block.AbyssPortalCoreBlock;
 import com.altnoir.mia.common.item.abs.IMiaTooltip;
 import com.altnoir.mia.worldgen.structure.MiaStructures;
-import java.util.List;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -23,6 +22,8 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.neoforge.network.PacketDistributor;
+
+import java.util.List;
 
 public class StarCompassItem extends Item implements IMiaTooltip {
     private static final int SEARCH_RADIUS = 12800;

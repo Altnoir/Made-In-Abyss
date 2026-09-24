@@ -47,6 +47,37 @@ public abstract class DoubleBerryblock extends BushBlock implements Bonemealable
                         .setValue(AGE, Integer.valueOf(0)));
     }
 
+    public static BlockState copyWaterloggedFrom(
+            LevelReader level, BlockPos pos, BlockState state) {
+        return state.hasProperty(BlockStateProperties.WATERLOGGED)
+                ? state.setValue(
+                        BlockStateProperties.WATERLOGGED, Boolean.valueOf(level.isWaterAt(pos)))
+                : state;
+    }
+
+    protected static void preventDropFromBottomPart(
+            Level level, BlockPos pos, BlockState state, Player player) {
+        DoubleBlockHalf doubleblockhalf = state.getValue(HALF);
+        if (doubleblockhalf == DoubleBlockHalf.UPPER) {
+            BlockPos blockpos = pos.below();
+            BlockState blockstate = level.getBlockState(blockpos);
+            if (blockstate.is(state.getBlock())
+                    && blockstate.getValue(HALF) == DoubleBlockHalf.LOWER) {
+                BlockState blockstate1 =
+                        blockstate.getFluidState().is(Fluids.WATER)
+                                ? Blocks.WATER.defaultBlockState()
+                                : Blocks.AIR.defaultBlockState();
+                level.setBlock(blockpos, blockstate1, 35);
+                level.levelEvent(player, 2001, blockpos, Block.getId(blockstate));
+            }
+        }
+    }
+
+    @Override
+    protected boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(AGE) < MAX_AGE;
+    }
+
     @Override
     protected ItemInteractionResult useItemOn(
             ItemStack stack,
@@ -61,11 +92,6 @@ public abstract class DoubleBerryblock extends BushBlock implements Bonemealable
         return !flag && stack.is(Items.BONE_MEAL)
                 ? ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
                 : super.useItemOn(stack, state, level, pos, player, hand, hitResult);
-    }
-
-    @Override
-    protected boolean isRandomlyTicking(BlockState state) {
-        return state.getValue(AGE) < MAX_AGE;
     }
 
     @Override
@@ -164,14 +190,6 @@ public abstract class DoubleBerryblock extends BushBlock implements Bonemealable
         }
     }
 
-    public static BlockState copyWaterloggedFrom(
-            LevelReader level, BlockPos pos, BlockState state) {
-        return state.hasProperty(BlockStateProperties.WATERLOGGED)
-                ? state.setValue(
-                        BlockStateProperties.WATERLOGGED, Boolean.valueOf(level.isWaterAt(pos)))
-                : state;
-    }
-
     @Override
     public @NotNull BlockState playerWillDestroy(
             Level level, BlockPos pos, BlockState state, Player player) {
@@ -194,24 +212,6 @@ public abstract class DoubleBerryblock extends BushBlock implements Bonemealable
             @Nullable BlockEntity blockEntity,
             ItemStack tool) {
         super.playerDestroy(level, player, pos, Blocks.AIR.defaultBlockState(), blockEntity, tool);
-    }
-
-    protected static void preventDropFromBottomPart(
-            Level level, BlockPos pos, BlockState state, Player player) {
-        DoubleBlockHalf doubleblockhalf = state.getValue(HALF);
-        if (doubleblockhalf == DoubleBlockHalf.UPPER) {
-            BlockPos blockpos = pos.below();
-            BlockState blockstate = level.getBlockState(blockpos);
-            if (blockstate.is(state.getBlock())
-                    && blockstate.getValue(HALF) == DoubleBlockHalf.LOWER) {
-                BlockState blockstate1 =
-                        blockstate.getFluidState().is(Fluids.WATER)
-                                ? Blocks.WATER.defaultBlockState()
-                                : Blocks.AIR.defaultBlockState();
-                level.setBlock(blockpos, blockstate1, 35);
-                level.levelEvent(player, 2001, blockpos, Block.getId(blockstate));
-            }
-        }
     }
 
     @Override

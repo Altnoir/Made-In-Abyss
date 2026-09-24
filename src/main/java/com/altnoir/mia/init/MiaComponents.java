@@ -4,13 +4,14 @@ import com.altnoir.mia.MIA;
 import com.altnoir.mia.common.component.ArtifactBundleInventoryComponent;
 import com.altnoir.mia.common.component.ArtifactEnhancementComponent;
 import com.mojang.serialization.Codec;
-import java.util.function.UnaryOperator;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.function.UnaryOperator;
 
 public class MiaComponents {
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES =
