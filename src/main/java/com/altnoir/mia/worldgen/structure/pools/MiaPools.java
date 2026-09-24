@@ -11,12 +11,19 @@ public class MiaPools {
         return ResourceKey.create(Registries.TEMPLATE_POOL, MiaUtil.miaId(name));
     }
 
-    public static void register(BootstrapContext<StructureTemplatePool> context, String name, StructureTemplatePool pool) {
+    public static void register(
+            BootstrapContext<StructureTemplatePool> context,
+            String name,
+            StructureTemplatePool pool) {
         context.register(createKey(name), pool);
     }
 
     public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
-        StarCompassRuinsPools.bootstrap(context);
+        CompassRuinsPools.bootstrap(context);
         AbyssStrongholdPools.bootstrap(context);
+        AbyssWindmillPools.bootstrap(context);
+        PetrifiedShipPools.bootstrap(context);
+        CaveRaiderHutPools.bootstrap(context);
+        AbyssSurfacePools.bootstrap(context);
     }
 }

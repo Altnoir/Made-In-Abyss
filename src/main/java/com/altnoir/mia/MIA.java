@@ -52,7 +52,11 @@ public class MIA {
     public static final AbyssTrialSpawnerManager SPAWNER_MANAGER = new AbyssTrialSpawnerManager();
 
     public MIA(IEventBus modEventBus, ModContainer modContainer) {
-        LOGGER.info("{} {}+{} initializing...", MOD_NAME, MiaBuildInfo.VERSION, MiaBuildInfo.GIT_COMMIT);
+        LOGGER.info(
+                "{} {}+{} initializing...",
+                MOD_NAME,
+                MiaBuildInfo.VERSION,
+                MiaBuildInfo.GIT_COMMIT);
 
         // 语言键：迁移到 Reginth 后 en_us.json 由 Reginth 独家写入，MIA 的键挂到它的 LANG provider 上。
         // 必须在这里（早于 datagen 事件）注册，否则 Reginth 的 provider 已经建好、加不进去了。
@@ -81,6 +85,7 @@ public class MIA {
         MiaDensityFunctionTypes.register(modEventBus);
         MiaFeatures.register(modEventBus);
         MiaPlacements.register(modEventBus);
+        MiaStructurePlacementTypes.register(modEventBus);
         MiaStructureTypes.register(modEventBus);
         MiaFoliagePlacerTypes.register(modEventBus);
         MiaTrunkPlacerTypes.register(modEventBus);

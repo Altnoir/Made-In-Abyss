@@ -52,10 +52,11 @@ public class MiaClientEvents {
      */
     @SuppressWarnings("deprecation")
     private static void registerBlockRenderLayers() {
-        ItemBlockRenderTypes.setRenderLayer(MiaBlocks.GLOW_PRIMO_FUNGUS.get(),
+        ItemBlockRenderTypes.setRenderLayer(
+                MiaBlocks.GLOW_PRIMO_FUNGUS.get(),
                 ChunkRenderTypeSet.of(RenderType.solid(), RenderType.translucent()));
-        ItemBlockRenderTypes.setRenderLayer(MiaBlocks.GLOW_PRIMO_CAP.get(),
-                ChunkRenderTypeSet.of(RenderType.translucent()));
+        ItemBlockRenderTypes.setRenderLayer(
+                MiaBlocks.GLOW_PRIMO_CAP.get(), ChunkRenderTypeSet.of(RenderType.translucent()));
     }
 
     public static void registerParticles(RegisterParticleProvidersEvent event) {
@@ -66,7 +67,8 @@ public class MiaClientEvents {
         RegisterEntityRendererEvent.register(event);
     }
 
-    public static void registerTooltipComponentFactories(RegisterClientTooltipComponentFactoriesEvent event) {
+    public static void registerTooltipComponentFactories(
+            RegisterClientTooltipComponentFactoriesEvent event) {
         event.register(ArtifactBundleInventoryComponent.class, ClientArtifactBundleTooltip::new);
     }
 
