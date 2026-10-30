@@ -50,7 +50,7 @@ public final class MiaLodServer {
             interestedLastTick = interested;
             if (!interested) suspendConsumerWork();
         }
-        if (interested && CurrentDimensionPriority.allReady(server)) {
+        if (interested) {
             MiaLodStorage.processDirtySections(server);
             MiaLodStorage.processPendingCapture(server);
         }

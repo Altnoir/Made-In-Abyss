@@ -14,6 +14,7 @@ import net.minecraft.world.level.Level;
 
 public final class VerticalNearReadiness {
     private static final Map<UUID, Map<Key, Long>> RECEIPTS = new HashMap<>();
+    private static final Map<UUID, CleanupContext> CLEANED = new HashMap<>();
 
     public static void accept(ServerPlayer player, VerticalSectionReceiptPayload p) {
         if (!MiaDimensions.isMiaDimension(player.level().dimension()) || p.revision() <= 0) return;
@@ -33,21 +34,34 @@ public final class VerticalNearReadiness {
         var map = RECEIPTS.computeIfAbsent(player.getUUID(), unused -> new HashMap<>());
         long now = player.level().getGameTime();
         int sectionOffset = Math.floorDiv(link.get().displayYOffset(), 16);
-        map.entrySet()
-                .removeIf(
-                        entry ->
-                                now - entry.getValue() > 100
-                                        || Math.abs(
-                                                        (long) entry.getKey().x()
-                                                                - player.chunkPosition().x())
-                                                > 1
-                                        || Math.abs(
-                                                        (long) entry.getKey().z()
-                                                                - player.chunkPosition().z())
-                                                > 1
-                                        || (entry.getKey().source().equals(p.source())
-                                                && !window.contains(
-                                                        entry.getKey().y() + sectionOffset)));
+        var center = player.chunkPosition();
+        var context =
+                new CleanupContext(
+                        player.level(),
+                        now,
+                        p.source(),
+                        center.x(),
+                        center.z(),
+                        window.minSection(),
+                        window.maxSection(),
+                        sectionOffset);
+        if (!context.equals(CLEANED.put(player.getUUID(), context))) {
+            map.entrySet()
+                    .removeIf(
+                            entry ->
+                                    now - entry.getValue() > 100
+                                            || Math.abs(
+                                                            (long) entry.getKey().x()
+                                                                    - player.chunkPosition().x())
+                                                    > 1
+                                            || Math.abs(
+                                                            (long) entry.getKey().z()
+                                                                    - player.chunkPosition().z())
+                                                    > 1
+                                            || (entry.getKey().source().equals(p.source())
+                                                    && !window.contains(
+                                                            entry.getKey().y() + sectionOffset)));
+        }
         Key key = new Key(p.source(), p.x(), p.y(), p.z());
         if (map.containsKey(key) || map.size() < (VerticalSectionRange.RADIUS * 2 + 1) * 18)
             map.put(key, now);
@@ -73,13 +87,25 @@ public final class VerticalNearReadiness {
 
     public static void remove(UUID player) {
         RECEIPTS.remove(player);
+        CLEANED.remove(player);
     }
 
     public static void clear() {
         RECEIPTS.clear();
+        CLEANED.clear();
     }
 
     private record Key(ResourceKey<Level> source, int x, int y, int z) {}
+
+    private record CleanupContext(
+            ServerLevel level,
+            long tick,
+            ResourceKey<Level> source,
+            int x,
+            int z,
+            int minSection,
+            int maxSection,
+            int offset) {}
 
     private VerticalNearReadiness() {}
 }

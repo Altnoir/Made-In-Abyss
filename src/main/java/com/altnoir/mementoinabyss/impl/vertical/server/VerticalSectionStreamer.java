@@ -35,6 +35,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jspecify.annotations.Nullable;
 
 public final class VerticalSectionStreamer {
     private static final int CHUNK_RADIUS = 1;
@@ -131,7 +132,7 @@ public final class VerticalSectionStreamer {
         int sent = 0;
         for (SectionKey key : keys) {
             Tracked tracked = state.tracked.get(key);
-            if (tracked == null || !tracked.pending) continue;
+            if (tracked == null || tracked.pending == null) continue;
             if (sent >= MAX_PAYLOADS) break;
             if (sendPending(server, player, key, desired.get(key), tracked)) sent++;
         }
@@ -141,31 +142,47 @@ public final class VerticalSectionStreamer {
         for (int index = 0; index < budget; index++) {
             SectionKey key = keys.get((start + index) % keys.size());
             Tracked tracked = state.tracked.computeIfAbsent(key, ignored -> new Tracked());
+            if (tracked.pending != null) continue;
             ServerLevel source = server.getLevel(key.dimension());
             if (source == null) continue;
             LevelChunk chunk = source.getChunkSource().getChunkNow(key.chunkX(), key.chunkZ());
             LevelChunkSection section = section(chunk, key.sectionY());
             if (section == null) continue;
             Registry<Biome> biomeRegistry = source.registryAccess().lookupOrThrow(Registries.BIOME);
+            if (tracked.hash == 0) {
+                Snapshot snapshot =
+                        build(
+                                source,
+                                chunk,
+                                section,
+                                key.sectionY(),
+                                desired.get(key),
+                                biomeRegistry);
+                if (sent >= MAX_PAYLOADS) tracked.pending = snapshot;
+                else {
+                    PacketDistributor.sendToPlayer(player, snapshot.payload());
+                    tracked.hash = snapshot.hash();
+                    sent++;
+                }
+                continue;
+            }
             long hash = hashSection(source, chunk, section, key.sectionY(), biomeRegistry);
             if (hash == tracked.hash) {
-                tracked.pending = false;
                 continue;
             }
             if (sent >= MAX_PAYLOADS) {
-                tracked.pending = true;
+                tracked.pending =
+                        build(
+                                source,
+                                chunk,
+                                section,
+                                key.sectionY(),
+                                desired.get(key),
+                                biomeRegistry);
                 continue;
             }
             sendSnapshot(
-                    player,
-                    source,
-                    chunk,
-                    section,
-                    key,
-                    desired.get(key),
-                    tracked,
-                    hash,
-                    biomeRegistry);
+                    player, source, chunk, section, key, desired.get(key), tracked, biomeRegistry);
             sent++;
         }
         state.cursor = start + budget;
@@ -214,24 +231,26 @@ public final class VerticalSectionStreamer {
             SectionKey key,
             LinkState link,
             Tracked tracked) {
+        Snapshot snapshot = tracked.pending;
         ServerLevel source = server.getLevel(key.dimension());
         if (source == null) {
-            tracked.pending = false;
+            tracked.pending = null;
             return false;
         }
-        LevelChunk chunk = source.getChunkSource().getChunkNow(key.chunkX(), key.chunkZ());
-        LevelChunkSection section = section(chunk, key.sectionY());
-        if (section == null) {
-            tracked.pending = false;
-            return false;
+        if (source.getGameTime() - snapshot.capturedAt() >= RESCAN_TICKS) {
+            tracked.pending = null;
+            LevelChunk chunk = source.getChunkSource().getChunkNow(key.chunkX(), key.chunkZ());
+            LevelChunkSection section = section(chunk, key.sectionY());
+            if (section == null) return false;
+            Registry<Biome> biomes = source.registryAccess().lookupOrThrow(Registries.BIOME);
+            long hash = hashSection(source, chunk, section, key.sectionY(), biomes);
+            if (hash == tracked.hash) return false;
+            sendSnapshot(player, source, chunk, section, key, link, tracked, biomes);
+            return true;
         }
-        Registry<Biome> biomeRegistry = source.registryAccess().lookupOrThrow(Registries.BIOME);
-        long hash = hashSection(source, chunk, section, key.sectionY(), biomeRegistry);
-        if (hash == tracked.hash) {
-            tracked.pending = false;
-            return false;
-        }
-        sendSnapshot(player, source, chunk, section, key, link, tracked, hash, biomeRegistry);
+        PacketDistributor.sendToPlayer(player, snapshot.payload());
+        tracked.hash = snapshot.hash();
+        tracked.pending = null;
         return true;
     }
 
@@ -243,16 +262,14 @@ public final class VerticalSectionStreamer {
             SectionKey key,
             LinkState link,
             Tracked tracked,
-            long hash,
             Registry<Biome> biomeRegistry) {
-        VerticalSectionPayload payload =
-                build(source, chunk, section, key.sectionY(), link, biomeRegistry);
-        PacketDistributor.sendToPlayer(player, payload);
-        tracked.hash = hash;
-        tracked.pending = false;
+        Snapshot snapshot = build(source, chunk, section, key.sectionY(), link, biomeRegistry);
+        PacketDistributor.sendToPlayer(player, snapshot.payload());
+        tracked.hash = snapshot.hash();
+        tracked.pending = null;
     }
 
-    private static VerticalSectionPayload build(
+    private static Snapshot build(
             ServerLevel source,
             LevelChunk chunk,
             LevelChunkSection section,
@@ -264,8 +281,10 @@ public final class VerticalSectionStreamer {
         int[] palette = new int[16];
         int paletteSize = 0;
         short[] cells = new short[VerticalSectionPayload.CELLS];
+        long hash = HASH_SEED;
         for (int index = 0; index < VerticalSectionPayload.CELLS; index++) {
             int state = Block.getId(states.get(localX(index), localY(index), localZ(index)));
+            hash = mix(hash, state);
             Short slot = lookup.get(state);
             if (slot == null) {
                 if (paletteSize == palette.length)
@@ -300,6 +319,7 @@ public final class VerticalSectionStreamer {
                             : sky.get(x, y, z);
             int blockValue = block == null ? 0 : block.get(x, y, z);
             light[index] = (byte) (skyValue << 4 | blockValue);
+            hash = mix(hash, skyValue << 4 | blockValue);
         }
 
         int[] biomeIds = new int[VerticalSectionPayload.BIOMES];
@@ -308,22 +328,25 @@ public final class VerticalSectionStreamer {
             int z = (index >>> 2) & 3;
             int y = (index >>> 4) & 3;
             biomeIds[index] = biomeRegistry.getId(section.getNoiseBiome(x, y, z).value());
+            hash = mix(hash, biomeIds[index]);
         }
 
-        return new VerticalSectionPayload(
-                link.target(),
-                link.source(),
-                link.offset(),
-                link.minY(),
-                link.height(),
-                chunk.getPos().x(),
-                sectionY,
-                chunk.getPos().z(),
-                nextRevision++,
-                palette,
-                cells,
-                light,
-                biomeIds);
+        VerticalSectionPayload payload =
+                new VerticalSectionPayload(
+                        link.target(),
+                        link.source(),
+                        link.offset(),
+                        link.minY(),
+                        link.height(),
+                        chunk.getPos().x(),
+                        sectionY,
+                        chunk.getPos().z(),
+                        nextRevision++,
+                        palette,
+                        cells,
+                        light,
+                        biomeIds);
+        return new Snapshot(hash, source.getGameTime(), payload);
     }
 
     private static long hashSection(
@@ -412,8 +435,10 @@ public final class VerticalSectionStreamer {
 
     private static final class Tracked {
         long hash;
-        boolean pending;
+        @Nullable Snapshot pending;
     }
+
+    private record Snapshot(long hash, long capturedAt, VerticalSectionPayload payload) {}
 
     private static final class PlayerState {
         ResourceKey<Level> viewer;

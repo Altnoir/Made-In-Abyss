@@ -1,9 +1,12 @@
 package com.altnoir.mementoinabyss.impl.lod.server;
 
+import com.altnoir.mementoinabyss.infrastructure.worldgen.dimension.MiaDimensions;
+import com.altnoir.mementoinabyss.infrastructure.worldgen.dimension.VerticalSectionRange;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.LongToIntFunction;
+import net.minecraft.world.level.Level;
 
 /** Camera-driven column selection. A coarse complete cover precedes expensive visible refinement. */
 public final class MiaLodViewPlanner {
@@ -11,11 +14,25 @@ public final class MiaLodViewPlanner {
 
     public static List<Demand> plan(
             MiaLodView view, int radius, int minY, int maxY, LongToIntFunction confirmedLevel) {
+        return plan(view, radius, minY, maxY, confirmedLevel, false);
+    }
+
+    static List<Demand> planNearby(
+            MiaLodView view, int radius, int minY, int maxY, LongToIntFunction confirmedLevel) {
+        return plan(view, radius, minY, maxY, confirmedLevel, true);
+    }
+
+    private static List<Demand> plan(
+            MiaLodView view,
+            int radius,
+            int minY,
+            int maxY,
+            LongToIntFunction confirmedLevel,
+            boolean nearbyOnly) {
         if (radius <= 0 || radius > 2048 || minY >= maxY)
             throw new IllegalArgumentException("Invalid LOD view window");
         int centerX = (int) Math.floor(view.x() / 16), centerZ = (int) Math.floor(view.z() / 16);
-        int chunks =
-                (radius + 15) / 16 + 1; // Include columns whose far face just touches the sphere.
+        int chunks = nearbyOnly ? 1 : (radius + 15) / 16 + 1;
         List<Demand> result = new ArrayList<>();
         for (int x = centerX - chunks; x <= centerX + chunks; x++) {
             for (int z = centerZ - chunks; z <= centerZ + chunks; z++) {
@@ -57,10 +74,8 @@ public final class MiaLodViewPlanner {
     /** Refine only already-selected, nearby wall columns when the camera approaches the seam. */
     static Demand refineAbyssSeam(
             Demand demand, MiaLodView view, CrossDimensionLodLink link, int layoutRadius) {
-        var abyss =
-                com.altnoir.mementoinabyss.infrastructure.worldgen.dimension.MiaDimensions
-                        .THE_ABYSS_LEVEL;
-        var overworld = net.minecraft.world.level.Level.OVERWORLD;
+        var abyss = MiaDimensions.THE_ABYSS_LEVEL;
+        var overworld = Level.OVERWORLD;
         boolean down = link.source().equals(abyss) && link.target().equals(overworld);
         boolean up = link.source().equals(overworld) && link.target().equals(abyss);
         if ((!down && !up) || demand.band() > 1 || demand.cellSize() == 1) return demand;
@@ -82,6 +97,33 @@ public final class MiaLodViewPlanner {
 
     static int workLimit(Demand demand, int confirmedLevel, int capacity) {
         return demand.band() == 0 && confirmedLevel == 0 ? capacity : Math.max(1, capacity - 8);
+    }
+
+    static Demand refineVerticalWindow(Demand demand, MiaLodView view, CrossDimensionLodLink link) {
+        if (!inVerticalWindow(
+                view,
+                link,
+                CrossDimensionLodKey.x(demand.key()),
+                CrossDimensionLodKey.z(demand.key()))) return demand;
+        // Establish cheap complete cover first, then refine it independently of camera direction.
+        int cell = demand.cellSize() == 16 ? 4 : 1;
+        return new Demand(
+                demand.key(),
+                cell,
+                0,
+                -1e12 + Math.abs(view.y() - link.sourceHeight().maxY() - link.displayYOffset()));
+    }
+
+    public static boolean inVerticalWindow(
+            MiaLodView view, CrossDimensionLodLink link, int chunkX, int chunkZ) {
+        if (!MiaDimensions.isMiaDimension(link.source())
+                || !MiaDimensions.isMiaDimension(link.target())) return false;
+        double minY = link.sourceHeight().minY() + link.displayYOffset();
+        double maxY = link.sourceHeight().maxY() + link.displayYOffset();
+        int reach = VerticalSectionRange.RADIUS * 16 + 64;
+        if (view.y() < minY - reach || view.y() > maxY + reach) return false;
+        int x = (int) Math.floor(view.x() / 16), z = (int) Math.floor(view.z() / 16);
+        return Math.abs((long) chunkX - x) <= 1 && Math.abs((long) chunkZ - z) <= 1;
     }
 
     private MiaLodViewPlanner() {}

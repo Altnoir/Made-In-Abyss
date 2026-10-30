@@ -27,7 +27,7 @@ import com.altnoir.mementoinabyss.impl.lod.network.CrossDimensionLodCacheOfferPa
 import com.altnoir.mementoinabyss.impl.lod.network.CrossDimensionLodDebugPayload;
 import com.altnoir.mementoinabyss.impl.rope.minecraft.RopeClimbing;
 import com.altnoir.mementoinabyss.impl.vertical.VerticalBlockCollisions;
-import com.altnoir.mementoinabyss.impl.vertical.client.VerticalNearTerrain;
+import com.altnoir.mementoinabyss.impl.vertical.client.VerticalClientSections;
 import com.altnoir.mementoinabyss.impl.vertical.client.VerticalResidentWorlds;
 import com.altnoir.mementoinabyss.impl.vertical.client.VerticalTransferClient;
 import com.altnoir.mementoinabyss.impl.vertical.network.VerticalSectionPayload;
@@ -100,7 +100,6 @@ public final class ClientEvent {
     @SubscribeEvent
     public static void registerRenderPipelines(RegisterRenderPipelinesEvent event) {
         CrossDimensionLodRenderTypes.registerPipelines(event);
-        VerticalNearTerrain.register(event);
         EnvironmentCubeSkyboxRenderer.registerPipeline(event);
         CaveExplorerBeaconRenderTypes.registerPipelines(event);
     }
@@ -115,7 +114,6 @@ public final class ClientEvent {
     @SubscribeEvent
     public static void renderCrossDimensionLod(RenderLevelStageEvent.AfterOpaqueBlocks event) {
         CrossDimensionLodRenderer.renderPersistent(event);
-        VerticalNearTerrain.render(event);
     }
 
     @SubscribeEvent
@@ -123,8 +121,7 @@ public final class ClientEvent {
         VerticalTransferClient.clonePlayer(event.getOldPlayer(), event.getNewPlayer());
         var level = Minecraft.getInstance().level;
         if (level != null) {
-            if (!VerticalResidentWorlds.owns(level)) VerticalNearTerrain.hydrate(level);
-            VerticalNearTerrain.bridge();
+            if (!VerticalResidentWorlds.owns(level)) VerticalClientSections.hydrate(level);
         }
     }
 
@@ -156,7 +153,7 @@ public final class ClientEvent {
 
     @SubscribeEvent
     public static void clientTick(ClientTickEvent.Pre event) {
-        VerticalNearTerrain.tick();
+        VerticalClientSections.tick();
         VerticalResidentWorlds.tick();
         var player = Minecraft.getInstance().player;
         if (player != null) {
@@ -171,7 +168,7 @@ public final class ClientEvent {
 
     @SubscribeEvent
     public static void registerPayloadHandlers(RegisterClientPayloadHandlersEvent event) {
-        VerticalBlockCollisions.setClientView(VerticalNearTerrain::collisionView);
+        VerticalBlockCollisions.setClientView(VerticalClientSections::collisionView);
         event.register(
                 VerticalTransferPayload.TYPE,
                 (payload, context) -> VerticalTransferClient.prepare(payload));
@@ -180,7 +177,7 @@ public final class ClientEvent {
                 (payload, context) -> VerticalResidentWorlds.accept(payload));
         event.register(
                 VerticalSectionPayload.TYPE,
-                (payload, context) -> VerticalNearTerrain.accept(payload));
+                (payload, context) -> VerticalClientSections.accept(payload));
         event.register(
                 CrossDimensionLodCacheOfferPayload.TYPE,
                 (payload, context) -> CrossDimensionLodRenderer.accept(payload));
@@ -220,7 +217,7 @@ public final class ClientEvent {
         ArtifactEnhancementMaterialTooltip.clear();
         LampTubeClientRecipes.clear();
         CrossDimensionLodRenderer.disconnect();
-        VerticalNearTerrain.clear();
+        VerticalClientSections.clear();
         VerticalTransferClient.clear();
         VerticalResidentWorlds.clear();
         CrossDimensionLodDebugEntry.clear();

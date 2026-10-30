@@ -22,7 +22,7 @@ import com.altnoir.mementoinabyss.impl.lod.server.CrossDimensionLodLink;
 import com.altnoir.mementoinabyss.impl.lod.server.CrossDimensionLodLinks;
 import com.altnoir.mementoinabyss.impl.lod.server.MiaLodStateNames;
 import com.altnoir.mementoinabyss.impl.lod.server.MiaLodView;
-import com.altnoir.mementoinabyss.impl.vertical.client.VerticalNearTerrain;
+import com.altnoir.mementoinabyss.impl.lod.server.MiaLodViewPlanner;
 import com.altnoir.mementoinabyss.infrastructure.worldgen.lighting.RegionalSkyLight;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -34,6 +34,7 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,6 +52,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -113,9 +115,11 @@ final class CrossDimensionLodRenderContext {
     private long clientTick;
     private MiaLodView cameraView, reportedView;
     private long viewSequence, lastViewTick = Long.MIN_VALUE / 2;
-    private boolean reportedTerrainReady;
+    private boolean reportedTerrainReady, reportedNearbyReady;
     private String reportedViewLink;
     private int reportedViewRadius;
+    private ClientLevel bridgeLevel;
+    private long bridgeUntil;
 
     MiaLodView cameraView() {
         return cameraView;
@@ -324,7 +328,7 @@ final class CrossDimensionLodRenderContext {
             // Normally serviced once per rendered frame; keep ACK/timeouts alive when rendering is
             // suspended.
             if (System.nanoTime() - lastReceiveNanos >= 50_000_000L) drainPayloads();
-            if (CurrentTerrainReadiness.ready()) drainMaterialRequests();
+            if (CurrentTerrainReadiness.ready() || nearbyWorkAllowed()) drainMaterialRequests();
         } else {
             clearPendingPayloads();
         }
@@ -368,6 +372,10 @@ final class CrossDimensionLodRenderContext {
         int scheduled = 0;
         for (var candidate : candidates) {
             long key = candidate.key;
+            if (!CurrentTerrainReadiness.ready() && candidate.priority >= 0) {
+                DIRTY_CHUNK_QUEUE.add(key);
+                continue;
+            }
             if (scheduled >= MESH_SCHEDULES_PER_FRAME
                     || IN_FLIGHT_MESHES.size() >= MAX_IN_FLIGHT_MESHES) {
                 DIRTY_CHUNK_QUEUE.add(key);
@@ -508,6 +516,8 @@ final class CrossDimensionLodRenderContext {
     }
 
     private void clearResources(boolean clearIngress) {
+        bridgeLevel = null;
+        bridgeUntil = 0;
         activeRenderLink = null;
         cameraView = null;
         reportedView = null;
@@ -562,6 +572,8 @@ final class CrossDimensionLodRenderContext {
 
     /** Called on the client thread after block models and the block atlas have reloaded. */
     public void onResourceReload() {
+        bridgeLevel = null;
+        bridgeUntil = 0;
         FACE_SPRITES.clear();
         MATERIAL_PENDING.clear();
         MATERIAL_QUEUE.clear();
@@ -614,9 +626,10 @@ final class CrossDimensionLodRenderContext {
     }
 
     private void transitionTo(ClientState nextState) {
-        if (clientState == nextState) return;
+        if (clientState == nextState && !(bridgeLevel != null && !bridging())) return;
         clientState = nextState;
-        if (nextState != ClientState.RUNNING) clearResources();
+        if (nextState != ClientState.RUNNING
+                && (nextState == ClientState.DISCONNECTED || !bridging())) clearResources();
     }
 
     private void ensurePackedFormat(boolean irisFormat) {
@@ -659,6 +672,10 @@ final class CrossDimensionLodRenderContext {
 
     /** Draws persistent CPU-batched pages. */
     public void renderPersistent(RenderLevelStageEvent.AfterOpaqueBlocks event) {
+        if (bridging()) {
+            renderBridge(event);
+            return;
+        }
         long callbackStarted = System.nanoTime();
         Minecraft minecraft = Minecraft.getInstance();
         ClientState desiredState = desiredState(minecraft);
@@ -688,10 +705,10 @@ final class CrossDimensionLodRenderContext {
                     activeLink.sourceHeight().maxY() + activeLink.displayYOffset());
         long meshStarted = System.nanoTime();
         closeRetiredMeshes();
-        if (CurrentTerrainReadiness.ready()) updateMeshes();
+        if (CurrentTerrainReadiness.ready() || nearbyWorkAllowed()) updateMeshes();
         long meshNanos = System.nanoTime() - meshStarted;
         long pageStarted = System.nanoTime();
-        if (CurrentTerrainReadiness.ready()) {
+        if (CurrentTerrainReadiness.ready() || nearbyWorkAllowed()) {
             finishPageTransitions(pageStarted);
             updatePages();
         }
@@ -795,8 +812,6 @@ final class CrossDimensionLodRenderContext {
         var atlas = minecraft.getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS);
         GpuBufferSlice lodFog = lodFog(viewRadius);
         GpuBufferSlice lodLight = lodLight(activeLink);
-        GpuBufferSlice nearMask =
-                irisShaders ? null : VerticalNearTerrain.lodMask(activeLink.source());
 
         try (RenderPass pass =
                 RenderSystem.getDevice()
@@ -813,7 +828,6 @@ final class CrossDimensionLodRenderContext {
             if (!irisShaders) {
                 pass.setUniform("LodFog", lodFog);
                 pass.setUniform("LodLight", lodLight);
-                pass.setUniform("VerticalNearMask", nearMask);
             }
             pass.bindTexture("Sampler0", atlas.getTextureView(), atlas.getSampler());
             pass.setIndexBuffer(indices, indexStorage.type());
@@ -872,6 +886,78 @@ final class CrossDimensionLodRenderContext {
                 System.nanoTime() - drawStarted);
     }
 
+    void bridgeTo(ClientLevel destination) {
+        if (activeRenderLink == null
+                || !activeRenderLink.source().equals(destination.dimension())
+                || IrisRenderCompat.isShaderPackInUse()
+                || PAGES.isEmpty()) return;
+        bridgeLevel = destination;
+        bridgeUntil = System.nanoTime() + 1_000_000_000L;
+    }
+
+    private boolean bridging() {
+        return bridgeLevel != null
+                && Minecraft.getInstance().level == bridgeLevel
+                && Minecraft.getInstance().getConnection() != null
+                && System.nanoTime() < bridgeUntil
+                && !CurrentTerrainReadiness.ready(bridgeLevel);
+    }
+
+    private void renderBridge(RenderLevelStageEvent.AfterOpaqueBlocks event) {
+        var mc = Minecraft.getInstance();
+        var camera = event.getLevelRenderState().cameraRenderState.pos;
+        int offset = activeRenderLink.displayYOffset();
+        float fade = Math.clamp((bridgeUntil - System.nanoTime()) / 1_000_000_000F, 0, 1);
+        var transform =
+                RenderSystem.getDynamicUniforms()
+                        .writeTransform(
+                                new Matrix4f(event.getModelViewMatrix())
+                                        .translate(
+                                                (float) -camera.x,
+                                                (float) -camera.y - offset,
+                                                (float) -camera.z),
+                                new Vector4f(1, 1, 1, fade),
+                                new Vector3f(),
+                                new Matrix4f());
+        var draws = new ArrayList<RenderPass.Draw<GpuBufferSlice>>();
+        int count = 0;
+        for (var page : PAGES.values()) {
+            if (!isWithinViewDistance(page.bounds, camera.add(0, offset, 0), 64)) continue;
+            addDraw(draws, page.vertexBuffer, page.indexCount, transform);
+            addDraw(draws, page.seamVertexBuffer, page.seamIndexCount, transform);
+            count = Math.max(count, Math.max(page.indexCount, page.seamIndexCount));
+        }
+        for (var edge : PAGE_EDGES.values()) {
+            if (!isWithinViewDistance(edge.bounds, camera.add(0, offset, 0), 64)) continue;
+            addDraw(draws, edge.buffer, edge.indexCount, transform);
+            count = Math.max(count, edge.indexCount);
+        }
+        if (count == 0) return;
+        var indices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+        var buffer = indices.getBuffer(count);
+        var target = mc.getMainRenderTarget();
+        var atlas = mc.getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS);
+        try (var pass =
+                RenderSystem.getDevice()
+                        .createCommandEncoder()
+                        .createRenderPass(
+                                () -> "Retained dimension LOD",
+                                target.getColorTextureView(),
+                                OptionalInt.empty(),
+                                target.getDepthTextureView(),
+                                OptionalDouble.empty())) {
+            pass.setPipeline(CrossDimensionLodRenderTypes.tiledBlocksPipeline());
+            RenderSystem.bindDefaultUniforms(pass);
+            pass.setUniform("DynamicTransforms", transform);
+            pass.setUniform("LodFog", lodFog(Math.max(160, serverViewRadius)));
+            pass.setUniform("LodLight", lodLight(activeRenderLink));
+            pass.bindTexture("Sampler0", atlas.getTextureView(), atlas.getSampler());
+            pass.setIndexBuffer(buffer, indices.type());
+            pass.drawMultipleIndexed(
+                    draws, buffer, indices.type(), List.of("DynamicTransforms"), null);
+        }
+    }
+
     private void updateCameraView(RenderLevelStageEvent.AfterOpaqueBlocks event, String linkId) {
         var camera = event.getLevelRenderState().cameraRenderState;
         if (camera.projectionMatrix == null || camera.viewRotationMatrix == null) return;
@@ -901,6 +987,7 @@ final class CrossDimensionLodRenderContext {
         int radius = MementoInAbyss.CONFIGS.graphsSection.crossDimensionLodViewDistance.get() * 16;
         if (!linkId.equals(reportedViewLink)
                 || reportedTerrainReady != CurrentTerrainReadiness.ready()
+                || reportedNearbyReady != CurrentTerrainReadiness.nearbyReady()
                 || radius != reportedViewRadius
                 || cameraView.materiallyDifferent(reportedView)
                 || clientTick - lastViewTick >= 20) {
@@ -910,8 +997,10 @@ final class CrossDimensionLodRenderContext {
                             ++viewSequence,
                             radius,
                             cameraView,
-                            CurrentTerrainReadiness.ready()));
+                            CurrentTerrainReadiness.ready(),
+                            CurrentTerrainReadiness.nearbyReady()));
             reportedTerrainReady = CurrentTerrainReadiness.ready();
+            reportedNearbyReady = CurrentTerrainReadiness.nearbyReady();
             reportedViewRadius = radius;
             reportedView = cameraView;
             reportedViewLink = linkId;
@@ -922,10 +1011,25 @@ final class CrossDimensionLodRenderContext {
     private double chunkPriority(long key) {
         var column = SELECTED_DATA.get(key);
         if (cameraView == null || column == null) return Double.MAX_VALUE;
+        if (activeRenderLink != null
+                && MiaLodViewPlanner.inVerticalWindow(
+                        cameraView, activeRenderLink, column.chunkX(), column.chunkZ()))
+            return -1e12;
         double x = column.chunkX() * 16.0, z = column.chunkZ() * 16.0;
         double y = column.minY() + column.displayYOffset();
         return cameraView.priority(
                 x, y, z, x + 16, y + column.yCells() * column.cellSize(), z + 16);
+    }
+
+    private boolean nearbyWorkAllowed() {
+        return CurrentTerrainReadiness.nearbyReady()
+                && cameraView != null
+                && activeRenderLink != null
+                && MiaLodViewPlanner.inVerticalWindow(
+                        cameraView,
+                        activeRenderLink,
+                        (int) Math.floor(cameraView.x() / 16),
+                        (int) Math.floor(cameraView.z() / 16));
     }
 
     private double pagePriority(long key) {
@@ -1047,6 +1151,7 @@ final class CrossDimensionLodRenderContext {
         for (var candidate : candidates) {
             long key = candidate.key;
             if (IN_FLIGHT_PAGES.size() >= MAX_IN_FLIGHT_PAGES) break;
+            if (!CurrentTerrainReadiness.ready() && candidate.priority >= 0) continue;
             // Include diagonal pages for AO, and retain the reservation through the visual
             // transition.
             if (pageOrNeighbourBusy(key)) continue;

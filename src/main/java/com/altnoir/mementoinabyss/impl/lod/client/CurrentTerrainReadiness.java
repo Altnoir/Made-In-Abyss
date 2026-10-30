@@ -11,7 +11,7 @@ final class CurrentTerrainReadiness {
     private static ClientLevel level;
     private static final LodTerrainReadiness.Gate GATE = new LodTerrainReadiness.Gate();
     private static long tick;
-    private static boolean covered, ready;
+    private static boolean covered, ready, nearbyReady;
 
     static void tick() {
         var mc = Minecraft.getInstance();
@@ -21,6 +21,7 @@ final class CurrentTerrainReadiness {
             GATE.reset();
             covered = false;
             ready = false;
+            nearbyReady = false;
             tick = 0;
         }
         if (level == null || mc.player == null) {
@@ -29,6 +30,11 @@ final class CurrentTerrainReadiness {
         }
         if (tick % 5 == 0) {
             var center = mc.player.chunkPosition();
+            nearbyReady = true;
+            for (int x = center.x() - 1; x <= center.x() + 1; x++)
+                for (int z = center.z() - 1; z <= center.z() + 1; z++)
+                    nearbyReady &=
+                            level.getChunkSource().getChunk(x, z, ChunkStatus.FULL, false) != null;
             covered =
                     LodTerrainReadiness.sample(
                                     center.x(),
@@ -52,11 +58,20 @@ final class CurrentTerrainReadiness {
         return ready;
     }
 
+    static boolean ready(ClientLevel expected) {
+        return level == expected && ready;
+    }
+
+    static boolean nearbyReady() {
+        return nearbyReady;
+    }
+
     static void reset() {
         level = null;
         GATE.reset();
         ready = false;
         covered = false;
+        nearbyReady = false;
     }
 
     private CurrentTerrainReadiness() {}

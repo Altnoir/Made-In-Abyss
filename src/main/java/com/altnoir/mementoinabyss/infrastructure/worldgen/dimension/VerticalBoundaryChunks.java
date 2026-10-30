@@ -15,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import org.jspecify.annotations.Nullable;
 
 public final class VerticalBoundaryChunks {
     private static final DeferredRegister<TicketType> TYPES =
@@ -23,7 +24,10 @@ public final class VerticalBoundaryChunks {
             TYPES.register("vertical_boundary", () -> new TicketType(0, TicketType.FLAG_LOADING));
     private static final int RADIUS = 1;
     private static final int RETAIN_TICKS = 20;
+    private static final int MIN_GENERATION_LEAD = 64;
     private static final int MAX_GENERATION_LEAD = 128;
+    private static final int PREDICTION_TICKS = 40;
+    private static final double MAX_HORIZONTAL_LEAD = 32;
     private static final Map<Target, Long> REQUESTS = new HashMap<>();
 
     public static void register(IEventBus bus) {
@@ -42,20 +46,25 @@ public final class VerticalBoundaryChunks {
                 int maxY = link.sourceHeight().maxY() + link.displayYOffset();
                 double toward = player.getKnownMovement().y * (link.displayYOffset() < 0 ? -1 : 1);
                 int generationLead =
-                        (int) Math.ceil(Math.clamp(toward * 60, 0, MAX_GENERATION_LEAD));
+                        (int)
+                                Math.ceil(
+                                        Math.clamp(
+                                                toward * 60,
+                                                MIN_GENERATION_LEAD,
+                                                MAX_GENERATION_LEAD));
                 // Generation leads the transmitted window; cold terrain must finish before it is
                 // visible.
                 if ((long) window.maxYExclusive() + generationLead <= minY
                         || (long) window.minY() - generationLead >= maxY) continue;
                 ServerLevel source = server.getLevel(link.source());
                 if (source == null) continue;
-                Target target = new Target(link.source(), player.chunkPosition());
-                if (REQUESTS.put(target, now) == null) {
-                    // Adding a loading-only ticket queues generation; do not call getChunkFuture
-                    // here because its main-thread path blocks until generation completes.
-                    source.getChunkSource()
-                            .addTicketWithRadius(PRELOAD.get(), target.center(), RADIUS);
-                }
+                request(source, player.chunkPosition(), now);
+                double boundary =
+                        link.displayYOffset() < 0
+                                ? player.level().getMinY()
+                                : player.level().getMaxY() + 1;
+                ChunkPos predicted = predictedCenter(player, boundary, toward);
+                if (predicted != null) request(source, predicted, now);
             }
         }
         var iterator = REQUESTS.entrySet().iterator();
@@ -68,6 +77,30 @@ public final class VerticalBoundaryChunks {
                         .removeTicketWithRadius(PRELOAD.get(), entry.getKey().center(), RADIUS);
             iterator.remove();
         }
+    }
+
+    private static void request(ServerLevel source, ChunkPos center, long now) {
+        Target target = new Target(source.dimension(), center);
+        if (REQUESTS.put(target, now) == null) {
+            // Loading-only tickets queue generation without synchronously requesting a future.
+            source.getChunkSource().addTicketWithRadius(PRELOAD.get(), center, RADIUS);
+        }
+    }
+
+    private static @Nullable ChunkPos predictedCenter(
+            ServerPlayer player, double boundary, double toward) {
+        if (toward <= 0) return null;
+        double ticks = Math.min(PREDICTION_TICKS, Math.abs(boundary - player.getY()) / toward);
+        var movement = player.getKnownMovement();
+        double dx = movement.x * ticks;
+        double dz = movement.z * ticks;
+        double distance = Math.hypot(dx, dz);
+        if (!Double.isFinite(distance) || distance == 0) return null;
+        double scale = Math.min(1, MAX_HORIZONTAL_LEAD / distance);
+        int x = (int) Math.floor((player.getX() + dx * scale) / 16);
+        int z = (int) Math.floor((player.getZ() + dz * scale) / 16);
+        var center = new ChunkPos(x, z);
+        return ChunkPos.isValid(x, z) && !center.equals(player.chunkPosition()) ? center : null;
     }
 
     public static boolean ready(ServerLevel level, ChunkPos center) {

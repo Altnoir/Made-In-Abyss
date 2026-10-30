@@ -8,6 +8,7 @@ import com.altnoir.mementoinabyss.impl.lod.server.MiaLodView;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
@@ -76,6 +77,10 @@ public final class CrossDimensionLodRenderer {
     public static void renderPersistent(RenderLevelStageEvent.AfterOpaqueBlocks event) {
         ensureContexts();
         for (var context : CONTEXTS.values()) context.renderPersistent(event);
+    }
+
+    public static void bridgeTo(ClientLevel level) {
+        for (var context : CONTEXTS.values()) context.bridgeTo(level);
     }
 
     public static void disconnect() {

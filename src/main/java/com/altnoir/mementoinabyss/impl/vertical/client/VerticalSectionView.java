@@ -4,39 +4,49 @@ import com.altnoir.mementoinabyss.impl.vertical.network.VerticalSectionPayload;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.CardinalLighting;
 import net.minecraft.world.level.CollisionGetter;
-import net.minecraft.world.level.ColorResolver;
-import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.WorldBorder;
-import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-final class VerticalTerrainView implements BlockAndTintGetter, CollisionGetter {
-    private final Map<VerticalNearTerrain.Key, VerticalSectionPayload> sections;
+final class VerticalSectionView implements CollisionGetter {
+    private final Map<VerticalClientSections.Key, VerticalSectionPayload> sections;
     private final VerticalSectionPayload anchor;
+    private final VerticalSectionPayload[] neighbours = new VerticalSectionPayload[27];
 
-    VerticalTerrainView(
-            Map<VerticalNearTerrain.Key, VerticalSectionPayload> sections,
+    VerticalSectionView(
+            Map<VerticalClientSections.Key, VerticalSectionPayload> sections,
             VerticalSectionPayload anchor) {
         this.sections = sections;
         this.anchor = anchor;
+        for (int y = -1; y <= 1; y++)
+            for (int z = -1; z <= 1; z++)
+                for (int x = -1; x <= 1; x++)
+                    neighbours[(y + 1) * 9 + (z + 1) * 3 + x + 1] =
+                            sections.get(
+                                    new VerticalClientSections.Key(
+                                            anchor.source(),
+                                            anchor.chunkX() + x,
+                                            anchor.sectionY() + y,
+                                            anchor.chunkZ() + z));
     }
 
     private VerticalSectionPayload section(BlockPos pos) {
+        int x = Math.floorDiv(pos.getX(), 16) - anchor.chunkX();
+        int y = Math.floorDiv(pos.getY(), 16) - anchor.sectionY();
+        int z = Math.floorDiv(pos.getZ(), 16) - anchor.chunkZ();
+        if (Math.abs(x) <= 1 && Math.abs(y) <= 1 && Math.abs(z) <= 1)
+            return neighbours[(y + 1) * 9 + (z + 1) * 3 + x + 1];
         return sections.get(
-                new VerticalNearTerrain.Key(
+                new VerticalClientSections.Key(
                         anchor.source(),
                         Math.floorDiv(pos.getX(), 16),
                         Math.floorDiv(pos.getY(), 16),
@@ -88,47 +98,5 @@ final class VerticalTerrainView implements BlockAndTintGetter, CollisionGetter {
     @Override
     public int getMinY() {
         return anchor.minY();
-    }
-
-    @Override
-    public CardinalLighting cardinalLighting() {
-        return CardinalLighting.DEFAULT;
-    }
-
-    @Override
-    public LevelLightEngine getLightEngine() {
-        return LevelLightEngine.EMPTY;
-    }
-
-    @Override
-    public int getBrightness(LightLayer layer, BlockPos pos) {
-        var s = section(pos);
-        if (s == null) return layer == LightLayer.SKY ? 15 : 0;
-        int light = Byte.toUnsignedInt(s.light()[index(pos)]);
-        return layer == LightLayer.SKY ? light >>> 4 : light & 15;
-    }
-
-    @Override
-    public int getRawBrightness(BlockPos pos, int darkening) {
-        return Math.max(
-                getBrightness(LightLayer.BLOCK, pos),
-                getBrightness(LightLayer.SKY, pos) - darkening);
-    }
-
-    @Override
-    public int getBlockTint(BlockPos pos, ColorResolver resolver) {
-        var s = section(pos);
-        if (s == null || Minecraft.getInstance().level == null) return -1;
-        int index =
-                ((pos.getY() & 15) >> 2) << 4
-                        | ((pos.getZ() & 15) >> 2) << 2
-                        | ((pos.getX() & 15) >> 2);
-        var biome =
-                Minecraft.getInstance()
-                        .level
-                        .registryAccess()
-                        .lookupOrThrow(Registries.BIOME)
-                        .byId(s.biomes()[index]);
-        return biome == null ? -1 : resolver.getColor(biome, pos.getX(), pos.getZ());
     }
 }

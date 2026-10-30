@@ -3,6 +3,8 @@ package com.altnoir.mementoinabyss.impl.vertical.client;
 import com.altnoir.mementoinabyss.impl.lod.server.CrossDimensionLodLinks;
 import com.altnoir.mementoinabyss.impl.vertical.network.VerticalTransferPayload;
 import com.altnoir.mementoinabyss.infrastructure.worldgen.dimension.MiaDimensions;
+import com.altnoir.mementoinabyss.mixin.accessor.VerticalLivingAnimationAccessor;
+import com.altnoir.mementoinabyss.mixin.accessor.VerticalPlayerAnimationAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
@@ -54,6 +56,29 @@ public final class VerticalTransferClient {
         newPlayer.yBodyRotO = oldPlayer.yBodyRotO;
         newPlayer.setYHeadRot(oldPlayer.getYHeadRot());
         newPlayer.yHeadRotO = oldPlayer.yHeadRotO;
+        var oldInventory = oldPlayer.getInventory();
+        var newInventory = newPlayer.getInventory();
+        for (int slot = 0; slot < oldInventory.getContainerSize(); slot++)
+            newInventory.setItem(slot, oldInventory.getItem(slot).copy());
+        newInventory.setSelectedSlot(oldInventory.getSelectedSlot());
+        var oldAnimation = (VerticalLivingAnimationAccessor) oldPlayer;
+        var newAnimation = (VerticalLivingAnimationAccessor) newPlayer;
+        newAnimation.mia$setItemSwapTicker(oldAnimation.mia$getItemSwapTicker());
+        newAnimation.mia$setAttackStrengthTicker(oldAnimation.mia$getAttackStrengthTicker());
+        ((VerticalPlayerAnimationAccessor) newPlayer)
+                .mia$setLastItemInMainHand(
+                        ((VerticalPlayerAnimationAccessor) oldPlayer)
+                                .mia$getLastItemInMainHand()
+                                .copy());
+        newPlayer.swinging = oldPlayer.swinging;
+        newPlayer.swingingArm = oldPlayer.swingingArm;
+        newPlayer.swingTime = oldPlayer.swingTime;
+        newPlayer.attackAnim = oldPlayer.attackAnim;
+        newPlayer.oAttackAnim = oldPlayer.oAttackAnim;
+        newPlayer.xBob = oldPlayer.xBob;
+        newPlayer.xBobO = oldPlayer.xBobO;
+        newPlayer.yBob = oldPlayer.yBob;
+        newPlayer.yBobO = oldPlayer.yBobO;
         mapped = true;
     }
 

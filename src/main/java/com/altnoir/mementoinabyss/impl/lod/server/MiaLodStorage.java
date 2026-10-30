@@ -72,6 +72,7 @@ final class MiaLodStorage {
     private static final int MAX_PENDING_WRITES = 128;
     private static final int MAX_CAPTURE_SUBMISSIONS_PER_TICK = 2;
     private static final int MAX_CAPTURES_IN_FLIGHT = 16;
+    private static final int NEARBY_CAPTURE_RESERVE = 16;
     private static final int MAX_DIRTY_CHUNKS_PER_TICK = 64;
     private static final ThreadPoolExecutor WRITER =
             new ThreadPoolExecutor(
@@ -116,6 +117,23 @@ final class MiaLodStorage {
         enqueueCapture(link, level, chunk, false, null);
     }
 
+    static boolean enqueueNearbyCapture(
+            CrossDimensionLodLink link, ServerLevel level, ChunkAccess chunk) {
+        CaptureKey key =
+                new CaptureKey(
+                        level.dimension(), ChunkPos.pack(chunk.getPos().x(), chunk.getPos().z()));
+        if (PENDING_CAPTURE_KEYS.contains(key)) {
+            for (var pending : PENDING_CAPTURES) {
+                if (pending.key.equals(key) && PENDING_CAPTURES.remove(pending)) {
+                    PENDING_CAPTURES.addFirst(pending);
+                    break;
+                }
+            }
+            return true;
+        }
+        return enqueueCapture(link, level, chunk, false, null, true);
+    }
+
     static void markSectionDirty(ServerLevel level, BlockPos pos) {
         if (!lodEnabled()) return;
         CaptureKey key =
@@ -136,6 +154,9 @@ final class MiaLodStorage {
             var iterator = DIRTY_SECTIONS.entrySet().iterator();
             while (iterator.hasNext() && dirty.size() < MAX_DIRTY_CHUNKS_PER_TICK) {
                 var entry = iterator.next();
+                if (!CurrentDimensionPriority.backgroundAllowed()
+                        && !MiaLodSampler.nearbyCapture(
+                                entry.getKey().dimension, entry.getKey().chunkPos)) continue;
                 dirty.add(
                         new DirtyCapture(
                                 entry.getKey(),
@@ -163,7 +184,12 @@ final class MiaLodStorage {
                     .forEach(
                             link -> {
                                 if (!enqueueCapture(
-                                        link, level, chunk, true, dirtyCapture.sections)) {
+                                        link,
+                                        level,
+                                        chunk,
+                                        true,
+                                        dirtyCapture.sections,
+                                        MiaLodSampler.nearbyCapture(link, key.chunkPos))) {
                                     retainDirtyChunk(key);
                                 }
                             });
@@ -191,13 +217,24 @@ final class MiaLodStorage {
             ChunkAccess chunk,
             boolean changed,
             int[] dirtySections) {
+        return enqueueCapture(link, level, chunk, changed, dirtySections, false);
+    }
+
+    private static boolean enqueueCapture(
+            CrossDimensionLodLink link,
+            ServerLevel level,
+            ChunkAccess chunk,
+            boolean changed,
+            int[] dirtySections,
+            boolean nearby) {
         if (!lodEnabled()) return false;
         Path destination = chunkPath(level, chunk.getPos());
         // Loads reuse stable real data. Save events explicitly bypass this check.
         if (!changed && isRealStored(destination) && !chunk.isUnsaved()) return true;
         int queueLimit =
                 MementoInAbyss.CONFIGS.graphsSection.crossDimensionLodCaptureQueueLimit.get();
-        if (PENDING_CAPTURE_COUNT.get() >= queueLimit) return false;
+        if (PENDING_CAPTURE_COUNT.get() >= queueLimit + (nearby ? NEARBY_CAPTURE_RESERVE : 0))
+            return false;
         CaptureKey key =
                 new CaptureKey(
                         level.dimension(), ChunkPos.pack(chunk.getPos().x(), chunk.getPos().z()));
@@ -206,13 +243,15 @@ final class MiaLodStorage {
                         key, (ignored, previous) -> nextRevision(previous == null ? 0L : previous));
         if (!PENDING_CAPTURE_KEYS.add(key)) return true;
         PENDING_CAPTURE_COUNT.incrementAndGet();
-        PENDING_CAPTURES.addLast(
+        var pending =
                 new PendingCapture(
                         key,
                         link,
                         new WeakReference<>(chunk),
                         version,
-                        dirtySections == null ? null : dirtySections.clone()));
+                        dirtySections == null ? null : dirtySections.clone());
+        if (nearby) PENDING_CAPTURES.addFirst(pending);
+        else PENDING_CAPTURES.addLast(pending);
         return true;
     }
 
@@ -226,6 +265,11 @@ final class MiaLodStorage {
                 checked++) {
             PendingCapture pending = PENDING_CAPTURES.pollFirst();
             if (pending == null) return;
+            if (!CurrentDimensionPriority.backgroundAllowed()
+                    && !MiaLodSampler.nearbyCapture(pending.link, pending.key.chunkPos)) {
+                PENDING_CAPTURES.addLast(pending);
+                continue;
+            }
             PENDING_CAPTURE_COUNT.decrementAndGet();
 
             ServerLevel level = server.getLevel(pending.key.dimension);
@@ -247,10 +291,23 @@ final class MiaLodStorage {
                 continue;
             }
 
-            // Copy compact containers on the server thread. Retain untouched containers in the
-            // snapshot as well: the worker may need a full rebuild if its base is
-            // missing/incompatible.
-            ChunkSnapshot snapshot = snapshot(chunk, true);
+            StoredChunk cachedBase = null;
+            if (pending.dirtySections != null && !containsFullCapture(pending.dirtySections)) {
+                synchronized (CHUNK_CACHE) {
+                    cachedBase = CHUNK_CACHE.get(destination);
+                }
+                MiaHeight height = pending.link.sourceHeight();
+                if (cachedBase != null
+                        && (cachedBase.provisional()
+                                || cachedBase.cellSize() != BASE_CELL_SIZE
+                                || cachedBase.minY() != height.minY()
+                                || cachedBase.yCells() != height.height() / BASE_CELL_SIZE
+                                || cachedBase.chunkX() != pos.x()
+                                || cachedBase.chunkZ() != pos.z())) cachedBase = null;
+            }
+            StoredChunk partialBase = cachedBase;
+            ChunkSnapshot snapshot =
+                    snapshot(chunk, true, partialBase == null ? null : pending.dirtySections);
             long captureEpoch = CAPTURE_EPOCH.get();
             CAPTURES_IN_FLIGHT.incrementAndGet();
             try {
@@ -262,7 +319,10 @@ final class MiaLodStorage {
                                 StoredChunk stored = null;
                                 if (pending.dirtySections != null
                                         && !containsFullCapture(pending.dirtySections)) {
-                                    StoredChunk previous = read(level, pos).orElse(null);
+                                    StoredChunk previous =
+                                            partialBase != null
+                                                    ? partialBase
+                                                    : read(level, pos).orElse(null);
                                     if (previous != null && !previous.provisional()) {
                                         StoredChunk patch =
                                                 new Voxelizer(pending.link, snapshot)
@@ -278,6 +338,16 @@ final class MiaLodStorage {
                                                         snapshot.minY,
                                                         pending.version);
                                     }
+                                }
+                                if (stored == null && partialBase != null) {
+                                    server.execute(
+                                            () -> {
+                                                if (captureEpoch != CAPTURE_EPOCH.get()
+                                                        || !lodEnabled()) return;
+                                                PENDING_CAPTURE_KEYS.remove(pending.key);
+                                                requeueCaptureAfterFailure(pending);
+                                            });
+                                    return;
                                 }
                                 if (stored == null)
                                     stored =
@@ -536,10 +606,16 @@ final class MiaLodStorage {
 
     @SuppressWarnings("unchecked")
     private static ChunkSnapshot snapshot(ChunkAccess chunk, boolean copy) {
+        return snapshot(chunk, copy, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ChunkSnapshot snapshot(ChunkAccess chunk, boolean copy, int[] selected) {
         LevelChunkSection[] source = chunk.getSections();
         PalettedContainer<BlockState>[] states =
                 (PalettedContainer<BlockState>[]) new PalettedContainer<?>[source.length];
         for (int i = 0; i < source.length; i++) {
+            if (selected != null && !containsSection(selected, i)) continue;
             LevelChunkSection section = source[i];
             if (!section.hasOnlyAir())
                 states[i] = copy ? section.getStates().copy() : section.getStates();

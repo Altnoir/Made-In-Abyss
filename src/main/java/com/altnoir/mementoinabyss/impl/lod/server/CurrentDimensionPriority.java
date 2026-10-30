@@ -13,7 +13,7 @@ final class CurrentDimensionPriority {
     private static final class State {
         ServerLevel level;
         long checked = Long.MIN_VALUE;
-        boolean coverage, ready;
+        boolean coverage, ready, nearbyReady;
         final LodTerrainReadiness.Gate gate = new LodTerrainReadiness.Gate();
     }
 
@@ -30,9 +30,15 @@ final class CurrentDimensionPriority {
             }
             if (state.checked == Long.MIN_VALUE || tick - state.checked >= 5) {
                 state.checked = tick;
+                var center = player.chunkPosition();
+                var source = player.level().getChunkSource();
+                state.nearbyReady = true;
+                for (int x = center.x() - 1; x <= center.x() + 1; x++)
+                    for (int z = center.z() - 1; z <= center.z() + 1; z++)
+                        state.nearbyReady &=
+                                source.getChunkNow(x, z) != null
+                                        && source.chunkMap.isChunkTracked(player, x, z);
                 if (player.getChunkTrackingView() instanceof ChunkTrackingView.Positioned view) {
-                    var center = player.chunkPosition();
-                    var source = player.level().getChunkSource();
                     state.coverage =
                             LodTerrainReadiness.sample(
                                             center.x(),
@@ -60,6 +66,11 @@ final class CurrentDimensionPriority {
 
     static boolean allReady(MinecraftServer server) {
         return backgroundAllowed;
+    }
+
+    static boolean nearbyReady(ServerPlayer player) {
+        var state = STATES.get(player);
+        return state != null && state.level == player.level() && state.nearbyReady;
     }
 
     static boolean backgroundAllowed() {

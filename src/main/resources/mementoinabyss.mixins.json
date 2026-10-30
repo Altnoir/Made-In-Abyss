@@ -39,8 +39,11 @@
   "client": [
     "accessor.PauseScreenAccessor",
     "accessor.VerticalMinecraftAccessor",
+    "accessor.VerticalLivingAnimationAccessor",
+    "accessor.VerticalPlayerAnimationAccessor",
     "client.FogRendererMixin",
     "client.SkyRendererMixin",
+    "compat.xaero.MapProcessorMixin",
     "client.VerticalTransferPacketMixin"
   ]
 }

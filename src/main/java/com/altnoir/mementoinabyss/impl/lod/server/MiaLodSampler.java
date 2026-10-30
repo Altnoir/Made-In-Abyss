@@ -4,6 +4,7 @@ import com.altnoir.mementoinabyss.MementoInAbyss;
 import com.altnoir.mementoinabyss.foundation.concurrent.MiaExecutors;
 import com.altnoir.mementoinabyss.impl.lod.network.*;
 import com.altnoir.mementoinabyss.impl.lod.network.CrossDimensionLodBatchPayload.Section;
+import com.altnoir.mementoinabyss.infrastructure.worldgen.OverworldAbyss;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -12,10 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongPredicate;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -81,6 +85,7 @@ final class MiaLodSampler {
         task.lastViewTick = now;
         task.viewSequence = payload.sequence();
         task.currentTerrainReady = payload.currentTerrainReady();
+        task.nearbyTerrainReady = payload.nearbyTerrainReady();
         task.replan |=
                 payload.view().materiallyDifferent(task.view)
                         || task.requestedRadius != payload.radius();
@@ -114,9 +119,30 @@ final class MiaLodSampler {
             if (!task.delivery.retries(now).isEmpty()) task.scan = true;
             drainPrepared(task);
             if (task.view == null || !validCamera(task.player, task.view)) continue;
-            if (!readyForLod(task) || !CurrentDimensionPriority.allReady(server)) continue;
+            boolean full = readyForLod(task) && CurrentDimensionPriority.allReady(server);
+            boolean nearby =
+                    task.nearbyTerrainReady
+                            && CurrentDimensionPriority.nearbyReady(task.player)
+                            && now - task.lastViewTick <= 40;
+            task.replan |= task.fullWorkAllowed != full;
+            task.fullWorkAllowed = full;
+            task.nearbyWorkAllowed = nearby;
+            if (!full && !nearby) continue;
             int radius = Math.min(CrossDimensionLodLinks.radius(task.link), task.requestedRadius);
             if (task.replan || task.radius != radius) task.plan(radius);
+            if (nearby) {
+                for (long key : task.nearbyKeys) {
+                    if (task.prioritizedCaptures.contains(key)) continue;
+                    var chunk =
+                            source.getChunkSource()
+                                    .getChunkNow(
+                                            CrossDimensionLodKey.x(key),
+                                            CrossDimensionLodKey.z(key));
+                    if (chunk != null
+                            && MiaLodStorage.enqueueNearbyCapture(task.link, source, chunk))
+                        task.prioritizedCaptures.add(key);
+                }
+            }
             if (task.availability.retryReady(now)) task.scan = true;
             sendCompleted(task, now);
             scheduleLoads(task, source, now);
@@ -188,8 +214,9 @@ final class MiaLodSampler {
         try {
             if (!isCurrent(task)
                     || work.cancelled
-                    || !task.currentTerrainReady
-                    || !CurrentDimensionPriority.backgroundAllowed()) return;
+                    || (!task.fullWorkAllowed
+                            && (!task.nearbyWorkAllowed || !task.nearbyKeys.contains(work.key))))
+                return;
             var stored = MiaLodStorage.read(source, pos);
             if (work.cancelled || !isCurrent(task)) return;
             if (stored.isPresent()
@@ -490,6 +517,21 @@ final class MiaLodSampler {
                                         && readyForLod(task));
     }
 
+    static boolean nearbyCapture(CrossDimensionLodLink link, long chunkPos) {
+        return nearbyCapture(link.source(), chunkPos);
+    }
+
+    static boolean nearbyCapture(ResourceKey<Level> source, long chunkPos) {
+        long key = CrossDimensionLodKey.pack(ChunkPos.getX(chunkPos), ChunkPos.getZ(chunkPos));
+        return TASKS.values().stream()
+                .anyMatch(
+                        task ->
+                                isCurrent(task)
+                                        && task.link.source().equals(source)
+                                        && task.nearbyWorkAllowed
+                                        && task.nearbyKeys.contains(key));
+    }
+
     static void clearTasks() {
         for (Task task : TASKS.values()) task.active = false;
         TASKS.clear();
@@ -548,7 +590,12 @@ final class MiaLodSampler {
         long feedbackTick = Long.MIN_VALUE;
         int feedbackCount;
         boolean replan = true, scan = true;
-        volatile boolean currentTerrainReady;
+        volatile boolean currentTerrainReady,
+                nearbyTerrainReady,
+                fullWorkAllowed,
+                nearbyWorkAllowed;
+        volatile Set<Long> nearbyKeys = Set.of();
+        final Set<Long> prioritizedCaptures = new HashSet<>();
 
         Task(ServerPlayer player, CrossDimensionLodLink link) {
             this.player = player;
@@ -562,14 +609,36 @@ final class MiaLodSampler {
             int minY = link.sourceHeight().minY() + link.displayYOffset();
             int maxY = link.sourceHeight().maxY() + link.displayYOffset();
             var selected =
-                    MiaLodViewPlanner.plan(view, radius, minY, maxY, delivery::confirmedCellSize);
+                    fullWorkAllowed
+                            ? MiaLodViewPlanner.plan(
+                                    view, radius, minY, maxY, delivery::confirmedCellSize)
+                            : MiaLodViewPlanner.planNearby(
+                                    view, radius, minY, maxY, delivery::confirmedCellSize);
             var previousDemands = demands;
             demands = new LinkedHashMap<>();
-            int layoutRadius =
-                    com.altnoir.mementoinabyss.infrastructure.worldgen.OverworldAbyss
-                            .configuredRadius();
-            for (var demand : selected) {
-                var refined = MiaLodViewPlanner.refineAbyssSeam(demand, view, link, layoutRadius);
+            int layoutRadius = OverworldAbyss.configuredRadius();
+            var refinedDemands =
+                    selected.stream()
+                            .map(
+                                    demand ->
+                                            MiaLodViewPlanner.refineAbyssSeam(
+                                                    demand, view, link, layoutRadius))
+                            .map(
+                                    demand ->
+                                            MiaLodViewPlanner.refineVerticalWindow(
+                                                    demand, view, link))
+                            .sorted(
+                                    Comparator.comparingDouble(MiaLodViewPlanner.Demand::priority)
+                                            .thenComparingLong(MiaLodViewPlanner.Demand::key))
+                            .toList();
+            nearbyKeys =
+                    refinedDemands.stream()
+                            .filter(demand -> demand.priority() < 0)
+                            .map(MiaLodViewPlanner.Demand::key)
+                            .collect(Collectors.toUnmodifiableSet());
+            prioritizedCaptures.retainAll(nearbyKeys);
+            for (var refined : refinedDemands) {
+                if (!fullWorkAllowed && !nearbyKeys.contains(refined.key())) continue;
                 demands.put(refined.key(), refined);
             }
             var iterator = work.values().iterator();

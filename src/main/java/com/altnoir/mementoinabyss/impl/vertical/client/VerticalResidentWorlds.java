@@ -1,6 +1,7 @@
 package com.altnoir.mementoinabyss.impl.vertical.client;
 
 import com.altnoir.mementoinabyss.compat.iris.IrisRenderCompat;
+import com.altnoir.mementoinabyss.impl.lod.client.CrossDimensionLodRenderer;
 import com.altnoir.mementoinabyss.impl.lod.server.CrossDimensionLodLinks;
 import com.altnoir.mementoinabyss.impl.vertical.network.VerticalSectionPayload;
 import com.altnoir.mementoinabyss.impl.vertical.network.VerticalWorldPayload;
@@ -110,7 +111,7 @@ public final class VerticalResidentWorlds {
     public static void accept(VerticalSectionPayload payload) {
         var resident = WORLDS.get(payload.source());
         if (resident != null && resident.level != Minecraft.getInstance().level)
-            VerticalNearTerrain.install(resident.level, payload);
+            VerticalClientSections.install(resident.level, payload);
     }
 
     public static @Nullable ClientLevel prepared(ResourceKey<Level> dimension) {
@@ -143,6 +144,7 @@ public final class VerticalResidentWorlds {
                     previous.getChunkSource().drop(new ChunkPos(x, z));
                 else WORLDS.get(previous.dimension()).chunks.put(new ChunkPos(x, z), true);
         ((VerticalMinecraftAccessor) mc).mia$setLevelRenderer(resident.renderer);
+        CrossDimensionLodRenderer.bridgeTo(level);
         mc.level = level;
         mc.particleEngine.setLevel(level);
         mc.gameRenderer.setLevel(level);
@@ -188,8 +190,11 @@ public final class VerticalResidentWorlds {
 
     public static void tracked(VerticalSectionPayload payload) {
         var resident = WORLDS.get(payload.source());
-        if (resident != null)
+        if (resident != null) {
             resident.chunks.put(new ChunkPos(payload.chunkX(), payload.chunkZ()), true);
+            resident.renderer.setSectionDirtyWithNeighbors(
+                    payload.chunkX(), payload.sectionY(), payload.chunkZ());
+        }
     }
 
     public static void clear() {

@@ -13,14 +13,14 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 @EventBusSubscriber(value = Dist.CLIENT)
 public final class VerticalClientInteraction {
-    private static VerticalNearTerrain.RemoteHit mining;
+    private static VerticalClientSections.RemoteHit mining;
     private static int ticks;
 
     @SubscribeEvent
     public static void interact(InputEvent.InteractionKeyMappingTriggered event) {
         var mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        var hit = VerticalNearTerrain.pick();
+        var hit = VerticalClientSections.pick();
         if (hit == null) return;
         if (event.isAttack()) {
             event.setCanceled(true);
@@ -38,11 +38,11 @@ public final class VerticalClientInteraction {
 
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post event) {
-        VerticalNearTerrain.holdAtPendingBoundary();
+        VerticalClientSections.holdAtPendingBoundary();
         ticks++;
         if (mining == null) return;
         var mc = Minecraft.getInstance();
-        var hit = VerticalNearTerrain.pick();
+        var hit = VerticalClientSections.pick();
         if (mc.player == null
                 || !mc.options.keyAttack.isDown()
                 || hit == null
@@ -58,7 +58,7 @@ public final class VerticalClientInteraction {
     }
 
     private static void send(
-            VerticalNearTerrain.RemoteHit hit, VerticalBlockActionPayload.Action action) {
+            VerticalClientSections.RemoteHit hit, VerticalBlockActionPayload.Action action) {
         ClientPacketDistributor.sendToServer(
                 new VerticalBlockActionPayload(hit.source(), hit.hit().getBlockPos(), action));
     }
