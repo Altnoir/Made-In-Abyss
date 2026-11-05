@@ -43,6 +43,7 @@
     "accessor.VerticalPlayerAnimationAccessor",
     "client.FogRendererMixin",
     "client.SkyRendererMixin",
+    "compat.dh.DhLodRendererMixin",
     "compat.xaero.MapProcessorMixin",
     "client.VerticalTransferPacketMixin"
   ]

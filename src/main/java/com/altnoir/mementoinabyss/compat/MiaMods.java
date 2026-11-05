@@ -13,6 +13,7 @@ import net.neoforged.fml.loading.FMLLoader;
 import org.jetbrains.annotations.Nullable;
 
 public enum MiaMods {
+    DISTANTHORIZONS,
     IRIS,
     PONDER,
     SODIUM;

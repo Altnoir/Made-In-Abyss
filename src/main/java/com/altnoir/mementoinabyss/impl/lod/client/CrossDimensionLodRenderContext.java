@@ -2,6 +2,7 @@ package com.altnoir.mementoinabyss.impl.lod.client;
 
 import com.altnoir.mementoinabyss.MementoInAbyss;
 import com.altnoir.mementoinabyss.compat.MiaMods;
+import com.altnoir.mementoinabyss.compat.dh.DhCrossDimensionLod;
 import com.altnoir.mementoinabyss.compat.iris.IrisRenderCompat;
 import com.altnoir.mementoinabyss.compat.sodium.SodiumLodCompat;
 import com.altnoir.mementoinabyss.foundation.concurrent.MiaExecutors;
@@ -51,6 +52,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
@@ -670,6 +672,25 @@ final class CrossDimensionLodRenderContext {
         while (!RETIRED_MESHES.isEmpty()) RETIRED_MESHES.removeFirst().resource.close();
     }
 
+    boolean coversLink(
+            CrossDimensionLodLink link, Vec3 camera, int radius, Predicate<AABB> covered) {
+        if (!link.equals(activeRenderLink)
+                || bridging()
+                || PAGES.isEmpty()
+                || !PAGE_TRANSITIONS.isEmpty()
+                || (serverViewRadius > 0 && serverViewRadius != radius)) return false;
+        for (var page : PAGES.values()) {
+            if (hasNativeGeometry(page)
+                    && isWithinViewDistance(page.bounds, camera, radius)
+                    && !covered.test(page.bounds)) return false;
+        }
+        for (var edge : PAGE_EDGES.values()) {
+            if (isWithinViewDistance(edge.bounds, camera, radius) && !covered.test(edge.bounds))
+                return false;
+        }
+        return true;
+    }
+
     /** Draws persistent CPU-batched pages. */
     public void renderPersistent(RenderLevelStageEvent.AfterOpaqueBlocks event) {
         if (bridging()) {
@@ -714,6 +735,13 @@ final class CrossDimensionLodRenderContext {
         }
         long transitionTime = System.nanoTime();
         long pageNanos = System.nanoTime() - pageStarted;
+        if (DhCrossDimensionLod.drawn(activeLink)) {
+            VISIBLE_PAGES.clear();
+            VISIBLE_EDGES.clear();
+            VISIBLE_PAGE_TRANSITIONS.clear();
+            VISIBLE_SPRITES.clear();
+            return;
+        }
         long visibilityStarted = System.nanoTime();
         var frustum = event.getLevelRenderState().cameraRenderState.cullFrustum;
         VISIBLE_EDGES.clear();

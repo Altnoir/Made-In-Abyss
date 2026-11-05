@@ -121,6 +121,11 @@ public final class VerticalResidentWorlds {
                 : null;
     }
 
+    public static @Nullable ClientLevel residentLevel(ResourceKey<Level> dimension) {
+        var resident = WORLDS.get(dimension);
+        return resident == null ? null : resident.level;
+    }
+
     public static boolean activate(ClientLevel level) {
         var resident = WORLDS.get(level.dimension());
         var mc = Minecraft.getInstance();

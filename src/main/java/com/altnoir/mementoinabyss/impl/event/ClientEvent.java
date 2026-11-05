@@ -8,6 +8,7 @@ import com.altnoir.mementoinabyss.client.screen.SeamlessLevelLoadingScreen;
 import com.altnoir.mementoinabyss.client.tooltip.ArtifactEnhancementMaterialTooltip;
 import com.altnoir.mementoinabyss.client.tooltip.CuriosSlotTooltip;
 import com.altnoir.mementoinabyss.client.tooltip.TooltipModifierRegistry;
+import com.altnoir.mementoinabyss.compat.dh.DhCrossDimensionLod;
 import com.altnoir.mementoinabyss.content.artifact.client.ArtifactEnhancementScreen;
 import com.altnoir.mementoinabyss.content.beacon.client.CaveExplorerBeaconRenderTypes;
 import com.altnoir.mementoinabyss.content.equipment.client.StarCompassOverlay;
@@ -58,6 +59,7 @@ import net.neoforged.neoforge.client.event.RegisterDimensionTransitionScreenEven
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
@@ -70,6 +72,11 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 @EventBusSubscriber(Dist.CLIENT)
 public final class ClientEvent {
+    @SubscribeEvent
+    public static void beginLodFrame(RenderFrameEvent.Pre event) {
+        DhCrossDimensionLod.beginFrame();
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void extractBiomeAmbientLight(ExtractLevelRenderStateEvent event) {
         BiomeAmbientLightRenderer.extract(event);
