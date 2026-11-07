@@ -377,10 +377,6 @@ public final class DhCrossDimensionLod {
         private final Class<?> tree = type("core.render.QuadTree.LodQuadTree");
         private final Class<?> renderSection = type("core.render.QuadTree.LodRenderSection");
         private final Class<?> sectionPos = type("core.pos.DhSectionPos");
-        private final Class<?> delayed = type("api.DhApi$Delayed");
-        private final Field renderProxy = delayed.getField("renderProxy");
-        private final Method deferTransparency =
-                renderProxy.getType().getMethod("getDeferTransparentRendering");
         private final Method currentWorld =
                 type("core.api.internal.SharedApi").getMethod("tryGetDhClientWorld");
         private final Method wrapLevel =
@@ -563,11 +559,6 @@ public final class DhCrossDimensionLod {
             }
         }
 
-        private boolean defersTransparency() throws ReflectiveOperationException {
-            Object proxy = renderProxy.get(null);
-            return proxy == null || (boolean) deferTransparency.invoke(proxy);
-        }
-
         private Object dataListener(Object sourceTree) {
             return Proxy.newProxyInstance(
                     listenerType.getClassLoader(),
@@ -622,6 +613,7 @@ public final class DhCrossDimensionLod {
             frustum.set(projection.mul(modelView.setTransposed(matrixArray)));
 
             double radiusSquared = (double) radius * radius - gap * gap;
+            boolean shadowPass = IrisRenderCompat.isRenderingShadowPass();
             int lowY = link.sourceHeight().minY() + link.displayYOffset();
             int highY = link.sourceHeight().maxY() + link.displayYOffset();
             var distances = new IdentityHashMap<Object, Double>();
@@ -638,8 +630,8 @@ public final class DhCrossDimensionLod {
                     double dx = Math.max(Math.max(x - camera.x, 0), camera.x - (x + w));
                     double dz = Math.max(Math.max(z - camera.z, 0), camera.z - (z + w));
                     if (dx * dx + dz * dz > radiusSquared
-                            || (!IrisRenderCompat.isShaderPackInUse()
-                                    && !visible(camera, x, lowY, z, x + w, highY, z + w))) continue;
+                            || (!shadowPass && !visible(camera, x, lowY, z, x + w, highY, z + w)))
+                        continue;
                     if ((boolean) hasVbos.invoke(item)) {
                         double centerX = x + w * 0.5 - camera.x;
                         double centerZ = z + w * 0.5 - camera.z;

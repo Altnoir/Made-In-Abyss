@@ -9,6 +9,10 @@ public final class IrisRenderCompat {
         return MiaMods.IRIS.runIfInstalled(() -> IrisApi::isShaderPackInUse).orElse(false);
     }
 
+    public static boolean isRenderingShadowPass() {
+        return MiaMods.IRIS.runIfInstalled(() -> IrisApi::isRenderingShadowPass).orElse(false);
+    }
+
     public static void assignTerrainSolidPipeline(RenderPipeline pipeline) {
         MiaMods.IRIS.executeIfInstalled(() -> () -> IrisApi.assignTerrainSolidPipeline(pipeline));
     }
@@ -20,6 +24,10 @@ public final class IrisRenderCompat {
     private static final class IrisApi {
         private static boolean isShaderPackInUse() {
             return net.irisshaders.iris.api.v0.IrisApi.getInstance().isShaderPackInUse();
+        }
+
+        private static boolean isRenderingShadowPass() {
+            return net.irisshaders.iris.api.v0.IrisApi.getInstance().isRenderingShadowPass();
         }
 
         private static void assignTerrainSolidPipeline(RenderPipeline pipeline) {
