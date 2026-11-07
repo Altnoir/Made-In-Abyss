@@ -8,7 +8,9 @@ import com.altnoir.mementoinabyss.client.screen.SeamlessLevelLoadingScreen;
 import com.altnoir.mementoinabyss.client.tooltip.ArtifactEnhancementMaterialTooltip;
 import com.altnoir.mementoinabyss.client.tooltip.CuriosSlotTooltip;
 import com.altnoir.mementoinabyss.client.tooltip.TooltipModifierRegistry;
+import com.altnoir.mementoinabyss.compat.MiaMods;
 import com.altnoir.mementoinabyss.compat.dh.DhCrossDimensionLod;
+import com.altnoir.mementoinabyss.compat.iris.IrisRenderCompat;
 import com.altnoir.mementoinabyss.content.artifact.client.ArtifactEnhancementScreen;
 import com.altnoir.mementoinabyss.content.beacon.client.CaveExplorerBeaconRenderTypes;
 import com.altnoir.mementoinabyss.content.equipment.client.StarCompassOverlay;
@@ -120,7 +122,20 @@ public final class ClientEvent {
 
     @SubscribeEvent
     public static void renderCrossDimensionLod(RenderLevelStageEvent.AfterOpaqueBlocks event) {
-        CrossDimensionLodRenderer.renderPersistent(event);
+        if (!MiaMods.DISTANTHORIZONS.isLoaded() || IrisRenderCompat.isShaderPackInUse())
+            CrossDimensionLodRenderer.renderPersistent(event);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void renderCrossDimensionLodAfterDhOpaque(
+            RenderLevelStageEvent.AfterOpaqueFeatures event) {
+        if (MiaMods.DISTANTHORIZONS.isLoaded() && !IrisRenderCompat.isShaderPackInUse())
+            CrossDimensionLodRenderer.renderPersistent(event);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void redrawCrossDimensionLodAfterDh(RenderLevelStageEvent.AfterLevel event) {
+        CrossDimensionLodRenderer.redrawAfterDh(event);
     }
 
     @SubscribeEvent

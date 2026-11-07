@@ -3,25 +3,29 @@ package com.altnoir.mementoinabyss.compat.dh;
 import com.altnoir.mementoinabyss.MementoInAbyss;
 import com.altnoir.mementoinabyss.compat.MiaMods;
 import com.altnoir.mementoinabyss.compat.iris.IrisRenderCompat;
-import com.altnoir.mementoinabyss.impl.lod.client.CrossDimensionLodRenderer;
 import com.altnoir.mementoinabyss.impl.lod.server.CrossDimensionLodLink;
 import com.altnoir.mementoinabyss.impl.lod.server.CrossDimensionLodLinks;
 import com.altnoir.mementoinabyss.impl.vertical.client.VerticalResidentWorlds;
 import com.altnoir.mementoinabyss.infrastructure.worldgen.dimension.MiaDimensions;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import org.joml.FrustumIntersection;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
@@ -30,16 +34,20 @@ import org.jspecify.annotations.Nullable;
 public final class DhCrossDimensionLod {
     private static final String DH = "com.seibel.distanthorizons.";
     private static final boolean REQUESTED =
-            Boolean.getBoolean("mia.experimentalDhCrossDimensionLod");
+            Boolean.parseBoolean(System.getProperty("mia.experimentalDhCrossDimensionLod", "true"));
     private static final HashSet<Identifier> REPORTED_LINKS = new HashSet<>();
     private static @Nullable Binding binding;
-    private static @Nullable Source source;
-    private static @Nullable Frame frame;
+    private static final Map<Identifier, Source> SOURCES = new HashMap<>();
+    private static final ArrayList<Frame> FRAMES = new ArrayList<>();
     private static boolean composited;
     private static boolean failed;
     private static int ticks;
 
-    public static void tick() {
+    public static boolean replacesMiaRenderer() {
+        return REQUESTED && MiaMods.DISTANTHORIZONS.isLoaded();
+    }
+
+    public static void tick(boolean currentTerrainReady) {
         if (!REQUESTED || !MiaMods.DISTANTHORIZONS.isLoaded()) return;
         var mc = Minecraft.getInstance();
         var server = mc.getSingleplayerServer();
@@ -48,82 +56,163 @@ public final class DhCrossDimensionLod {
                 || mc.player == null
                 || server == null
                 || server.isPublished()
-                || IrisRenderCompat.isShaderPackInUse()
                 || !MementoInAbyss.CONFIGS.graphsSection.crossDimensionLodEnabled.get()) {
             clear();
             return;
         }
         if (++ticks % 5 != 0) return;
-        var link =
-                CrossDimensionLodLinks.forTargets(mc.level).stream()
-                        .filter(DhCrossDimensionLod::supported)
-                        .findFirst()
-                        .orElse(null);
-        var resident = link == null ? null : VerticalResidentWorlds.residentLevel(link.source());
-        if (link == null
-                || resident == null
-                || gap(link, mc.player.getY()) >= CrossDimensionLodLinks.radius(link)) {
+        if (!CrossDimensionLodLinks.activeAt(mc.level, mc.player.getX(), mc.player.getZ())) {
             clear();
             return;
         }
+        if (!currentTerrainReady) return;
+        var links =
+                CrossDimensionLodLinks.forTargets(mc.level).stream()
+                        .filter(DhCrossDimensionLod::supported)
+                        .filter(
+                                link ->
+                                        gap(link, mc.player.getY())
+                                                < CrossDimensionLodLinks.radius(link))
+                        .toList();
         try {
+            if (links.isEmpty()) {
+                clear();
+                return;
+            }
             if (binding == null) binding = new Binding();
             var dh = binding;
             Object world = dh.currentWorld.invoke(null);
-            Object configs = dh.configs.get(null);
-            if (world == null || configs == null || dh.generatesDistantTerrain(configs)) {
+            if (world == null) {
                 clear();
                 return;
             }
             var models = mc.getModelManager().getBlockStateModelSet();
-            if (source == null
-                    || source.viewer() != mc.level
-                    || source.resident() != resident
-                    || source.world() != world
-                    || source.models() != models
-                    || !source.link().equals(link)) {
-                clear();
-                Object wrapper = dh.wrapLevel.invoke(null, resident);
-                Object level = dh.getClientLevel.invoke(world, wrapper);
-                boolean owned = level == null;
-                if (owned) level = dh.loadClientLevel.invoke(world, wrapper);
-                if (level == null || !dh.serverClientLevel.isInstance(level)) return;
-                source = new Source(link, mc.level, resident, world, wrapper, level, models, owned);
+            var iterator = SOURCES.values().iterator();
+            while (iterator.hasNext()) {
+                var previous = iterator.next();
+                var resident = VerticalResidentWorlds.residentLevel(previous.link().source());
+                if (!links.contains(previous.link())
+                        || previous.viewer() != mc.level
+                        || previous.world() != world
+                        || previous.models() != models
+                        || previous.radius() != CrossDimensionLodLinks.radius(previous.link())
+                        || (resident != null && resident != previous.resident())) {
+                    iterator.remove();
+                    release(previous);
+                }
             }
-            Object buffers = dh.getBuffers.invoke(source.level());
-            if (buffers == null) {
-                clear();
-                return;
+            for (var link : links) {
+                var active = SOURCES.get(link.id());
+                if (active == null) {
+                    active = createSource(link, world, models);
+                    if (active == null) continue;
+                    SOURCES.put(link.id(), active);
+                }
+                dh.markAccessed.invoke(active.wrapper());
+                dh.tickTree.invoke(
+                        active.tree(),
+                        dh.blockPosition.newInstance(mc.player.getBlockX(), mc.player.getBlockZ()));
             }
-            // DH's single-player tick updates only its active dimension. This tick loads
-            // existing LOD data for the resident neighbor, with DH distant generation disabled.
-            dh.tickModule.invoke(dh.clientModule.get(source.level()));
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
             disable(e);
         }
     }
 
+    private static @Nullable Source createSource(
+            CrossDimensionLodLink link, Object world, Object models)
+            throws ReflectiveOperationException {
+        var mc = Minecraft.getInstance();
+        var resident = VerticalResidentWorlds.residentLevel(link.source());
+        boolean privateView = resident == null;
+        if (privateView) {
+            var server = mc.getSingleplayerServer();
+            var level = server == null ? null : server.getLevel(link.source());
+            if (level == null) return null;
+            // This metadata view gives DH the real dimension and hashed seed. It has no
+            // dedicated renderer, chunk tickets, section stream, or ticking simulation.
+            resident =
+                    new ClientLevel(
+                            mc.getConnection(),
+                            new ClientLevel.ClientLevelData(
+                                    mc.level.getDifficulty(),
+                                    mc.level.getLevelData().isHardcore(),
+                                    false),
+                            link.source(),
+                            Holder.direct(link.sourceType()),
+                            2,
+                            2,
+                            mc.levelRenderer,
+                            level.isDebug(),
+                            BiomeManager.obfuscateSeed(level.getSeed()),
+                            level.getSeaLevel());
+        }
+        boolean installed = false;
+        try {
+            Object wrapper = binding.wrapLevel.invoke(null, resident);
+            Object level = binding.getClientLevel.invoke(world, wrapper);
+            boolean owned = level == null;
+            if (owned) level = binding.loadClientLevel.invoke(world, wrapper);
+            if (level == null || !binding.serverClientLevel.isInstance(level)) return null;
+            int radius = CrossDimensionLodLinks.radius(link);
+            Object provider = binding.getProvider.invoke(level);
+            Object renderLevel = binding.sourceLevel(level, wrapper);
+            // A separate bounded tree shares DH's source data without changing its active
+            // renderer or using the global distant-generation radius for a neighbor.
+            Object tree =
+                    binding.treeConstructor.newInstance(
+                            renderLevel,
+                            radius * 2,
+                            mc.player.getBlockX(),
+                            mc.player.getBlockZ(),
+                            provider);
+            Object updates = binding.dataListener(tree);
+            try {
+                binding.addDataListener.invoke(provider, updates);
+                installed = true;
+                return new Source(
+                        link,
+                        mc.level,
+                        resident,
+                        world,
+                        wrapper,
+                        level,
+                        models,
+                        owned,
+                        privateView,
+                        radius,
+                        provider,
+                        tree,
+                        updates);
+            } finally {
+                if (!installed) {
+                    binding.closeTree.invoke(tree);
+                    if (owned) binding.unloadLevel.invoke(world, wrapper);
+                }
+            }
+        } finally {
+            if (!installed && privateView) NeoForge.EVENT_BUS.post(new LevelEvent.Unload(resident));
+        }
+    }
+
     public static void beginFrame() {
-        frame = null;
+        FRAMES.clear();
         composited = false;
     }
 
     public static void render(
             Object renderer, Object nativeParams, boolean opaque, Object profiler) {
-        var active = source;
         var dh = binding;
         var mc = Minecraft.getInstance();
-        if (active == null
-                || dh == null
+        if (dh == null
                 || failed
-                || active.viewer() != mc.level
-                || active.models() != mc.getModelManager().getBlockStateModelSet()
-                || IrisRenderCompat.isShaderPackInUse()
+                || mc.level == null
+                || mc.getSingleplayerServer() == null
+                || mc.getSingleplayerServer().isPublished()
                 || !MementoInAbyss.CONFIGS.graphsSection.crossDimensionLodEnabled.get()
                 || !dh.nativeRenderer(renderer)) return;
         try {
             if (opaque) {
-                if (frame != null || dh.defersTransparency()) return;
+                FRAMES.clear();
                 Object nativeCamera = dh.camera.get(nativeParams);
                 if (nativeCamera == null) return;
                 Vec3 camera =
@@ -131,28 +220,54 @@ public final class DhCrossDimensionLod {
                                 dh.cameraX.getDouble(nativeCamera),
                                 dh.cameraY.getDouble(nativeCamera),
                                 dh.cameraZ.getDouble(nativeCamera));
-                double gap = gap(active.link(), camera.y);
-                int radius = CrossDimensionLodLinks.radius(active.link());
-                // DH's near fade is for the active world's vanilla terrain. Keep the MIA
-                // seam renderer wherever that fade could remove valid neighboring geometry.
-                if (gap >= radius || gap <= dh.nearClip.getFloat(nativeParams) * 1.5) return;
-                Object params = dh.parameters.newInstance();
-                dh.copyParameters(params, nativeParams, active);
-                dh.paramLevel.set(params, active.wrapper());
-                dh.lightmap.set(params, dh.lightmap.get(nativeParams));
-                dh.camera.set(
-                        params,
-                        dh.position.newInstance(
-                                camera.x, camera.y - active.link().displayYOffset(), camera.z));
-                dh.copyParams.invoke(dh.apiCopy.get(params), params);
-                Object handler = dh.getBuffers.invoke(active.level());
-                if (handler == null) return;
-                Object list = dh.selectBuffers(handler, params, active.link(), camera, radius, gap);
-                if (list == null) return;
-                dh.render.invoke(renderer, params, true, list, profiler);
-                frame = new Frame(active, params, list);
-            } else if (frame != null && frame.source() == active && !composited) {
-                dh.render.invoke(renderer, frame.params(), false, frame.buffers(), profiler);
+                if (!CrossDimensionLodLinks.activeAt(mc.level, camera.x, camera.z)) return;
+                for (var active : SOURCES.values()) {
+                    if (active.viewer() != mc.level
+                            || active.models() != mc.getModelManager().getBlockStateModelSet())
+                        continue;
+                    double gap = gap(active.link(), camera.y);
+                    int radius = CrossDimensionLodLinks.radius(active.link());
+                    if (gap >= radius) continue;
+                    Object params = dh.parameters.newInstance();
+                    dh.copyParameters(params, nativeParams, active);
+                    dh.paramLevel.set(params, active.wrapper());
+                    dh.lightmap.set(params, dh.lightmap.get(nativeParams));
+                    dh.camera.set(
+                            params,
+                            dh.position.newInstance(
+                                    camera.x, camera.y - active.link().displayYOffset(), camera.z));
+                    dh.copyParameters(dh.apiCopy.get(params), params, active);
+                    Object list =
+                            dh.selectBuffers(
+                                    active.tree(), params, active.link(), camera, radius, gap);
+                    if (list == null) continue;
+                    dh.renderNeighbor(renderer, params, nativeParams, true, list, profiler);
+                    FRAMES.add(new Frame(active, params, list));
+                }
+            } else {
+                for (var frame : FRAMES) {
+                    dh.copyParameters(frame.params(), nativeParams, frame.source());
+                    dh.paramLevel.set(frame.params(), frame.source().wrapper());
+                    dh.lightmap.set(frame.params(), dh.lightmap.get(nativeParams));
+                    Object nativeCamera = dh.camera.get(nativeParams);
+                    if (nativeCamera == null) continue;
+                    dh.camera.set(
+                            frame.params(),
+                            dh.position.newInstance(
+                                    dh.cameraX.getDouble(nativeCamera),
+                                    dh.cameraY.getDouble(nativeCamera)
+                                            - frame.source().link().displayYOffset(),
+                                    dh.cameraZ.getDouble(nativeCamera)));
+                    dh.copyParameters(
+                            dh.apiCopy.get(frame.params()), frame.params(), frame.source());
+                    dh.renderNeighbor(
+                            renderer,
+                            frame.params(),
+                            nativeParams,
+                            false,
+                            frame.buffers(),
+                            profiler);
+                }
             }
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
             disable(e);
@@ -160,45 +275,65 @@ public final class DhCrossDimensionLod {
     }
 
     public static void composited() {
-        composited = frame != null && frame.source() == source;
-        if (composited && REPORTED_LINKS.add(frame.source().link().id())) {
-            MementoInAbyss.LOGGER.info(
-                    "Experimental DH neighbor LOD rendered {}", frame.source().link().id());
+        composited = !FRAMES.isEmpty();
+        for (var frame : FRAMES) {
+            if (REPORTED_LINKS.add(frame.source().link().id()))
+                MementoInAbyss.LOGGER.info(
+                        "Experimental DH neighbor LOD rendered {}", frame.source().link().id());
         }
     }
 
     public static boolean drawn(CrossDimensionLodLink link) {
-        return composited && frame != null && frame.source().link().equals(link);
+        if (!composited) return false;
+        for (var frame : FRAMES) {
+            if (frame.source().link().equals(link) && SOURCES.get(link.id()) == frame.source())
+                return true;
+        }
+        return false;
     }
 
     public static void clear() {
-        var previous = source;
-        source = null;
         beginFrame();
-        if (previous == null
-                || !previous.owned()
-                || binding == null
-                || Minecraft.getInstance().level == previous.resident()) return;
+        for (var source : SOURCES.values()) release(source);
+        SOURCES.clear();
+    }
+
+    private static void release(Source previous) {
         try {
-            if (binding.currentWorld.invoke(null) == previous.world())
+            if (binding != null) {
+                try {
+                    binding.removeDataListener.invoke(previous.provider(), previous.updates());
+                } finally {
+                    binding.closeTree.invoke(previous.tree());
+                }
+            }
+            if (Minecraft.getInstance().level == previous.resident()) return;
+            if (previous.owned()
+                    && binding != null
+                    && binding.currentWorld.invoke(null) == previous.world())
                 binding.unloadLevel.invoke(previous.world(), previous.wrapper());
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
             failed = true;
             MementoInAbyss.LOGGER.warn("Failed to release experimental DH neighbor level", e);
+        } finally {
+            if (previous.privateView() && Minecraft.getInstance().level != previous.resident())
+                NeoForge.EVENT_BUS.post(new LevelEvent.Unload(previous.resident()));
         }
     }
 
     private static void disable(Throwable error) {
         failed = true;
-        clear();
+        beginFrame();
         MementoInAbyss.LOGGER.warn("Experimental DH neighbor LOD disabled", error);
     }
 
     private static boolean supported(CrossDimensionLodLink link) {
-        return (link.source().equals(MiaDimensions.GREAT_FAULT_LEVEL)
-                        && link.target().equals(MiaDimensions.THE_ABYSS_LEVEL))
-                || (link.source().equals(MiaDimensions.THE_ABYSS_LEVEL)
-                        && link.target().equals(MiaDimensions.GREAT_FAULT_LEVEL));
+        return (link.source().equals(MiaDimensions.THE_ABYSS_LEVEL)
+                        && (link.target().equals(MiaDimensions.GREAT_FAULT_LEVEL)
+                                || link.target().equals(Level.OVERWORLD)))
+                || (link.target().equals(MiaDimensions.THE_ABYSS_LEVEL)
+                        && (link.source().equals(MiaDimensions.GREAT_FAULT_LEVEL)
+                                || link.source().equals(Level.OVERWORLD)));
     }
 
     private static double gap(CrossDimensionLodLink link, double y) {
@@ -217,7 +352,12 @@ public final class DhCrossDimensionLod {
             Object wrapper,
             Object level,
             Object models,
-            boolean owned) {}
+            boolean owned,
+            boolean privateView,
+            int radius,
+            Object provider,
+            Object tree,
+            Object updates) {}
 
     private record Frame(Source source, Object params, Object buffers) {}
 
@@ -231,7 +371,6 @@ public final class DhCrossDimensionLod {
                 type("api.methods.events.sharedParameterObjects.DhApiRenderParam");
         private final Class<?> param = type("core.render.RenderParams");
         private final Class<?> vector = type("core.util.math.DhVec3d");
-        private final Class<?> bufferHandler = type("core.render.RenderBufferHandler");
         private final Class<?> buffer =
                 type("core.dataObjects.render.bufferBuilding.LodBufferContainer");
         private final Class<?> bufferList = type("core.util.objects.SortedArraySet");
@@ -239,17 +378,9 @@ public final class DhCrossDimensionLod {
         private final Class<?> renderSection = type("core.render.QuadTree.LodRenderSection");
         private final Class<?> sectionPos = type("core.pos.DhSectionPos");
         private final Class<?> delayed = type("api.DhApi$Delayed");
-        private final Field configs = delayed.getField("configs");
         private final Field renderProxy = delayed.getField("renderProxy");
         private final Method deferTransparency =
                 renderProxy.getType().getMethod("getDeferTransparentRendering");
-        private final Method worldConfig =
-                type("api.interfaces.config.IDhApiConfig").getMethod("worldGenerator");
-        private final Method generation =
-                type("api.interfaces.config.both.IDhApiWorldGenerationConfig")
-                        .getMethod("enableDistantWorldGeneration");
-        private final Method configValue =
-                type("api.interfaces.config.IDhApiConfigValue").getMethod("getValue");
         private final Method currentWorld =
                 type("core.api.internal.SharedApi").getMethod("tryGetDhClientWorld");
         private final Method wrapLevel =
@@ -259,9 +390,27 @@ public final class DhCrossDimensionLod {
         private final Method loadClientLevel =
                 clientWorld.getMethod("getOrLoadClientLevel", levelWrapper);
         private final Method unloadLevel = clientWorld.getMethod("unloadLevel", levelWrapper);
-        private final Field clientModule = serverClientLevel.getField("clientside");
-        private final Method tickModule = clientModule.getType().getMethod("clientTick");
-        private final Method getBuffers = clientLevel.getMethod("getRenderBufferHandler");
+        private final Method markAccessed =
+                type("core.wrapperInterfaces.world.IClientLevelWrapper").getMethod("markAccessed");
+        private final Class<?> providerType =
+                type("core.file.fullDatafile.V2.FullDataSourceProviderV2");
+        private final Class<?> listenerType =
+                type("core.file.fullDatafile.IDataSourceUpdateListenerFunc");
+        private final Class<?> blockPositionType = type("core.pos.blockPos.DhBlockPos2D");
+        private final Method getProvider = clientLevel.getMethod("getFullDataProvider");
+        private final Constructor<?> treeConstructor =
+                tree.getConstructor(clientLevel, int.class, int.class, int.class, providerType);
+        private final Constructor<?> blockPosition =
+                blockPositionType.getConstructor(int.class, int.class);
+        private final Method tickTree = tree.getMethod("tryTick", blockPositionType);
+        private final Method closeTree = tree.getMethod("close");
+        private final Method reloadSection = tree.getMethod("queuePosToReload", long.class);
+        private final Method dataPosition =
+                type("core.dataObjects.fullData.sources.FullDataSourceV2").getMethod("getPos");
+        private final Method addDataListener =
+                providerType.getMethod("addDataSourceUpdateListener", listenerType);
+        private final Method removeDataListener =
+                providerType.getMethod("removeDataSourceUpdateListener", listenerType);
         private final Constructor<?> parameters = param.getConstructor();
         private final Constructor<?> position =
                 vector.getConstructor(double.class, double.class, double.class);
@@ -281,7 +430,6 @@ public final class DhCrossDimensionLod {
         private final Field paramLevel = param.getField("clientLevelWrapper");
         private final Field lightmap = param.getField("lightmap");
         private final Field apiCopy = param.getField("apiCopy");
-        private final Method copyParams = apiParam.getMethod("update", apiParam);
         private final Method initParams =
                 apiParam.getMethod(
                         "update",
@@ -296,7 +444,6 @@ public final class DhCrossDimensionLod {
                         int.class,
                         type("api.interfaces.world.IDhApiLevelWrapper"));
         private final Method matrixValues = matrix.getMethod("putValuesInArray", float[].class);
-        private final Field quadTree = bufferHandler.getDeclaredField("lodQuadTree");
         private final Method enabledSections =
                 tree.getMethod("populateListWithEnabledRenderSections", ArrayList.class);
         private final Field sectionBuffer = renderSection.getField("renderBufferContainer");
@@ -317,6 +464,29 @@ public final class DhCrossDimensionLod {
                                 boolean.class,
                                 bufferList,
                                 type("core.wrapperInterfaces.minecraft.IProfilerWrapper"));
+        private final Class<?> glRenderer = type("common.render.openGl.GlDhTerrainRenderer");
+        private final Method glShader = glRenderer.getMethod("getTerrainShaderProgram");
+        private final Method fillShader =
+                type("api.interfaces.override.rendering.IDhApiShaderProgram")
+                        .getMethod("fillUniformData", apiParam);
+        private final Field glFrameIndex =
+                type("common.render.openGl.terrain.GlDhTerrainShaderProgram")
+                        .getDeclaredField("frameIndexMod8");
+        private final Field glClipDistance =
+                type("common.render.openGl.terrain.GlDhTerrainShaderProgram")
+                        .getField("uClipDistance");
+        private final Field glDither =
+                type("common.render.openGl.terrain.GlDhTerrainShaderProgram")
+                        .getField("uDitherDhRendering");
+        private final Method glFloatUniform =
+                type("common.render.openGl.glObject.shader.GlShaderProgram")
+                        .getMethod("setUniform", int.class, float.class);
+        private final Method glBooleanUniform =
+                type("common.render.openGl.glObject.shader.GlShaderProgram")
+                        .getMethod("setUniform", int.class, boolean.class);
+        private final Field blazeFrameIndex =
+                type("common.render.blaze.BlazeDhTerrainRenderer")
+                        .getDeclaredField("frameIndexMod8");
 
         private final ArrayList<Object> sections = new ArrayList<>();
         private final float[] matrixArray = new float[16];
@@ -325,7 +495,8 @@ public final class DhCrossDimensionLod {
         private final FrustumIntersection frustum = new FrustumIntersection();
 
         private Binding() throws ReflectiveOperationException {
-            quadTree.setAccessible(true);
+            glFrameIndex.setAccessible(true);
+            blazeFrameIndex.setAccessible(true);
             if (!"3.3.3".equals(api.getMethod("getModVersion").invoke(null))
                     || (int) api.getMethod("getApiMajorVersion").invoke(null) != 7
                     || (int) api.getMethod("getApiMinorVersion").invoke(null) != 2)
@@ -345,8 +516,51 @@ public final class DhCrossDimensionLod {
                     mcModelView.get(original),
                     dhProjection.get(original),
                     dhModelView.get(original),
-                    source.link().sourceHeight().minY(),
+                    source.link().sourceHeight().minY() + source.link().displayYOffset(),
                     source.wrapper());
+        }
+
+        private void renderNeighbor(
+                Object renderer,
+                Object params,
+                Object original,
+                boolean opaque,
+                Object buffers,
+                Object profiler)
+                throws ReflectiveOperationException {
+            if (IrisRenderCompat.isShaderPackInUse()) {
+                render.invoke(renderer, params, opaque, buffers, profiler);
+                return;
+            }
+            if (glRenderer.isInstance(renderer)) {
+                Object shader = glShader.invoke(renderer);
+                int frame = glFrameIndex.getInt(shader);
+                try {
+                    // DH shares this shader across terrain passes. Keep the native frame's
+                    // jitter while installing the neighbor's height and matrix uniforms.
+                    glFrameIndex.setInt(shader, frame < 0 ? frame : (frame + 7) % 8);
+                    fillShader.invoke(shader, params);
+                    // Neighbor LOD has no vanilla terrain to fade into in this dimension.
+                    glFloatUniform.invoke(shader, glClipDistance.getInt(shader), 0.0F);
+                    glBooleanUniform.invoke(shader, glDither.getInt(shader), false);
+                    render.invoke(renderer, params, opaque, buffers, profiler);
+                } finally {
+                    try {
+                        glFrameIndex.setInt(shader, frame < 0 ? frame : (frame + 7) % 8);
+                        fillShader.invoke(shader, original);
+                    } finally {
+                        glFrameIndex.setInt(shader, frame);
+                    }
+                }
+            } else {
+                int frame = blazeFrameIndex.getInt(renderer);
+                try {
+                    blazeFrameIndex.setInt(renderer, opaque ? (frame + 7) % 8 : frame);
+                    render.invoke(renderer, params, opaque, buffers, profiler);
+                } finally {
+                    blazeFrameIndex.setInt(renderer, frame);
+                }
+            }
         }
 
         private boolean defersTransparency() throws ReflectiveOperationException {
@@ -354,9 +568,38 @@ public final class DhCrossDimensionLod {
             return proxy == null || (boolean) deferTransparency.invoke(proxy);
         }
 
-        private boolean generatesDistantTerrain(Object config) throws ReflectiveOperationException {
-            return Boolean.TRUE.equals(
-                    configValue.invoke(generation.invoke(worldConfig.invoke(config))));
+        private Object dataListener(Object sourceTree) {
+            return Proxy.newProxyInstance(
+                    listenerType.getClassLoader(),
+                    new Class<?>[] {listenerType},
+                    (proxy, method, args) ->
+                            switch (method.getName()) {
+                                case "OnDataSourceUpdated" -> {
+                                    reloadSection.invoke(sourceTree, dataPosition.invoke(args[0]));
+                                    yield null;
+                                }
+                                case "equals" -> proxy == args[0];
+                                case "hashCode" -> System.identityHashCode(proxy);
+                                case "toString" -> "MIA neighbor DH data listener";
+                                default ->
+                                        throw new UnsupportedOperationException(method.getName());
+                            });
+        }
+
+        private Object sourceLevel(Object level, Object wrapper) {
+            // DH's integrated-server level returns Minecraft's active client wrapper.
+            // A render-only view pins asynchronous mesh construction to the source world.
+            return Proxy.newProxyInstance(
+                    clientLevel.getClassLoader(),
+                    new Class<?>[] {clientLevel},
+                    (proxy, method, args) ->
+                            switch (method.getName()) {
+                                case "getClientLevelWrapper" -> wrapper;
+                                case "equals" -> proxy == args[0];
+                                case "hashCode" -> System.identityHashCode(proxy);
+                                case "toString" -> "MIA neighbor DH render level";
+                                default -> method.invoke(level, args);
+                            });
         }
 
         private boolean nativeRenderer(Object renderer) {
@@ -366,7 +609,7 @@ public final class DhCrossDimensionLod {
         }
 
         private @Nullable Object selectBuffers(
-                Object handler,
+                Object sourceTree,
                 Object params,
                 CrossDimensionLodLink link,
                 Vec3 camera,
@@ -382,9 +625,8 @@ public final class DhCrossDimensionLod {
             int lowY = link.sourceHeight().minY() + link.displayYOffset();
             int highY = link.sourceHeight().maxY() + link.displayYOffset();
             var distances = new IdentityHashMap<Object, Double>();
-            var coveredChunks = new LongOpenHashSet();
             try {
-                enabledSections.invoke(quadTree.get(handler), sections);
+                enabledSections.invoke(sourceTree, sections);
                 for (Object section : sections) {
                     if (!(boolean) rendering.invoke(section)) continue;
                     Object item = sectionBuffer.get(section);
@@ -393,30 +635,21 @@ public final class DhCrossDimensionLod {
                     int x = (int) minX.invoke(null, position);
                     int z = (int) minZ.invoke(null, position);
                     int w = (int) width.invoke(null, position);
-                    double dx = Math.max(Math.abs(camera.x - x), Math.abs(camera.x - (x + w)));
-                    double dz = Math.max(Math.abs(camera.z - z), Math.abs(camera.z - (z + w)));
+                    double dx = Math.max(Math.max(x - camera.x, 0), camera.x - (x + w));
+                    double dz = Math.max(Math.max(z - camera.z, 0), camera.z - (z + w));
                     if (dx * dx + dz * dz > radiusSquared
-                            || !visible(camera, x, lowY, z, x + w, highY, z + w)) continue;
+                            || (!IrisRenderCompat.isShaderPackInUse()
+                                    && !visible(camera, x, lowY, z, x + w, highY, z + w))) continue;
                     if ((boolean) hasVbos.invoke(item)) {
                         double centerX = x + w * 0.5 - camera.x;
                         double centerZ = z + w * 0.5 - camera.z;
                         distances.put(item, centerX * centerX + centerZ * centerZ);
                     }
-                    for (int cx = x >> 4; cx < ((x + w) >> 4); cx++) {
-                        for (int cz = z >> 4; cz < ((z + w) >> 4); cz++) {
-                            coveredChunks.add(ChunkPos.pack(cx, cz));
-                        }
-                    }
                 }
             } finally {
                 sections.clear();
             }
-            // If any visible MIA terrain falls outside the uploaded DH tiles, keep the
-            // entire link on MIA. This also keeps its depth and transparent pass consistent.
-            if (distances.isEmpty()
-                    || !CrossDimensionLodRenderer.coversLink(
-                            link, camera, radius, bounds -> covered(camera, bounds, coveredChunks)))
-                return null;
+            if (distances.isEmpty()) return null;
             var order = new IdentityHashMap<Object, Integer>();
             var ordered = new ArrayList<>(distances.keySet());
             ordered.sort(Comparator.comparingDouble(distances::get));
@@ -426,35 +659,6 @@ public final class DhCrossDimensionLod {
                 add.invoke(result, item);
             }
             return result;
-        }
-
-        private boolean covered(Vec3 camera, AABB bounds, LongOpenHashSet chunks) {
-            if (!visible(
-                    camera,
-                    bounds.minX,
-                    bounds.minY,
-                    bounds.minZ,
-                    bounds.maxX,
-                    bounds.maxY,
-                    bounds.maxZ)) return true;
-            int minX = (int) Math.floor(bounds.minX) >> 4;
-            int minZ = (int) Math.floor(bounds.minZ) >> 4;
-            int maxX = Math.max(minX, ((int) Math.ceil(bounds.maxX) - 1) >> 4);
-            int maxZ = Math.max(minZ, ((int) Math.ceil(bounds.maxZ) - 1) >> 4);
-            for (int x = minX; x <= maxX; x++) {
-                for (int z = minZ; z <= maxZ; z++) {
-                    if (!chunks.contains(ChunkPos.pack(x, z))
-                            && visible(
-                                    camera,
-                                    x * 16.0,
-                                    bounds.minY,
-                                    z * 16.0,
-                                    (x + 1) * 16.0,
-                                    bounds.maxY,
-                                    (z + 1) * 16.0)) return false;
-                }
-            }
-            return true;
         }
 
         private boolean visible(

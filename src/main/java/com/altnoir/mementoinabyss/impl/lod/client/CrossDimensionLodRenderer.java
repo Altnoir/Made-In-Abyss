@@ -4,16 +4,12 @@ import com.altnoir.mementoinabyss.compat.dh.DhCrossDimensionLod;
 import com.altnoir.mementoinabyss.foundation.concurrent.MiaExecutors;
 import com.altnoir.mementoinabyss.impl.lod.network.CrossDimensionLodControlPayload;
 import com.altnoir.mementoinabyss.impl.lod.network.CrossDimensionLodStreamPayload;
-import com.altnoir.mementoinabyss.impl.lod.server.CrossDimensionLodLink;
 import com.altnoir.mementoinabyss.impl.lod.server.CrossDimensionLodLinks;
 import com.altnoir.mementoinabyss.impl.lod.server.MiaLodView;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
@@ -57,13 +53,14 @@ public final class CrossDimensionLodRenderer {
 
     /** Network callback: route without touching Minecraft or GPU state. */
     public static void accept(CrossDimensionLodStreamPayload payload) {
+        if (DhCrossDimensionLod.replacesMiaRenderer()) return;
         context(payload.transfer().linkId()).accept(payload);
     }
 
     public static void clientTick() {
         MiaExecutors.refreshThreadLimit();
         CurrentTerrainReadiness.tick();
-        DhCrossDimensionLod.tick();
+        DhCrossDimensionLod.tick(CurrentTerrainReadiness.ready());
         ensureContexts();
         boolean enabled = false;
         for (var context : CONTEXTS.values()) {
@@ -80,18 +77,19 @@ public final class CrossDimensionLodRenderer {
         }
     }
 
-    public static boolean coversLink(
-            CrossDimensionLodLink link, Vec3 camera, int radius, Predicate<AABB> covered) {
-        var context = CONTEXTS.get(link.id().toString());
-        return context != null && context.coversLink(link, camera, radius, covered);
-    }
-
-    public static void renderPersistent(RenderLevelStageEvent.AfterOpaqueBlocks event) {
+    public static void renderPersistent(RenderLevelStageEvent event) {
+        if (DhCrossDimensionLod.replacesMiaRenderer()) return;
         ensureContexts();
         for (var context : CONTEXTS.values()) context.renderPersistent(event);
     }
 
+    public static void redrawAfterDh(RenderLevelStageEvent.AfterLevel event) {
+        if (DhCrossDimensionLod.replacesMiaRenderer()) return;
+        for (var context : CONTEXTS.values()) context.redrawAfterDh(event);
+    }
+
     public static void bridgeTo(ClientLevel level) {
+        if (DhCrossDimensionLod.replacesMiaRenderer()) return;
         for (var context : CONTEXTS.values()) context.bridgeTo(level);
     }
 

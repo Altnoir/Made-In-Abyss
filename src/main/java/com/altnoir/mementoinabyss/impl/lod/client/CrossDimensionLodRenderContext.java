@@ -52,7 +52,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Predicate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
@@ -74,6 +73,7 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -183,6 +183,8 @@ final class CrossDimensionLodRenderContext {
     private RegionalSkyLight.Region lodLightRegion;
     private float lodLightAmbient;
     private CrossDimensionLodLink activeRenderLink;
+    private @Nullable LodDraw pendingDhRedraw;
+    private boolean pendingDhBridge;
     private Object materialModelSet;
     private ClientState clientState = ClientState.RUNNING;
     private final String linkId;
@@ -518,6 +520,8 @@ final class CrossDimensionLodRenderContext {
     }
 
     private void clearResources(boolean clearIngress) {
+        pendingDhRedraw = null;
+        pendingDhBridge = false;
         bridgeLevel = null;
         bridgeUntil = 0;
         activeRenderLink = null;
@@ -574,6 +578,8 @@ final class CrossDimensionLodRenderContext {
 
     /** Called on the client thread after block models and the block atlas have reloaded. */
     public void onResourceReload() {
+        pendingDhRedraw = null;
+        pendingDhBridge = false;
         bridgeLevel = null;
         bridgeUntil = 0;
         FACE_SPRITES.clear();
@@ -672,29 +678,13 @@ final class CrossDimensionLodRenderContext {
         while (!RETIRED_MESHES.isEmpty()) RETIRED_MESHES.removeFirst().resource.close();
     }
 
-    boolean coversLink(
-            CrossDimensionLodLink link, Vec3 camera, int radius, Predicate<AABB> covered) {
-        if (!link.equals(activeRenderLink)
-                || bridging()
-                || PAGES.isEmpty()
-                || !PAGE_TRANSITIONS.isEmpty()
-                || (serverViewRadius > 0 && serverViewRadius != radius)) return false;
-        for (var page : PAGES.values()) {
-            if (hasNativeGeometry(page)
-                    && isWithinViewDistance(page.bounds, camera, radius)
-                    && !covered.test(page.bounds)) return false;
-        }
-        for (var edge : PAGE_EDGES.values()) {
-            if (isWithinViewDistance(edge.bounds, camera, radius) && !covered.test(edge.bounds))
-                return false;
-        }
-        return true;
-    }
-
     /** Draws persistent CPU-batched pages. */
-    public void renderPersistent(RenderLevelStageEvent.AfterOpaqueBlocks event) {
+    public void renderPersistent(RenderLevelStageEvent event) {
+        pendingDhRedraw = null;
+        pendingDhBridge = false;
         if (bridging()) {
             renderBridge(event);
+            pendingDhBridge = MiaMods.DISTANTHORIZONS.isLoaded();
             return;
         }
         long callbackStarted = System.nanoTime();
@@ -735,13 +725,6 @@ final class CrossDimensionLodRenderContext {
         }
         long transitionTime = System.nanoTime();
         long pageNanos = System.nanoTime() - pageStarted;
-        if (DhCrossDimensionLod.drawn(activeLink)) {
-            VISIBLE_PAGES.clear();
-            VISIBLE_EDGES.clear();
-            VISIBLE_PAGE_TRANSITIONS.clear();
-            VISIBLE_SPRITES.clear();
-            return;
-        }
         long visibilityStarted = System.nanoTime();
         var frustum = event.getLevelRenderState().cameraRenderState.cullFrustum;
         VISIBLE_EDGES.clear();
@@ -805,13 +788,51 @@ final class CrossDimensionLodRenderContext {
             recordTiming(callbackStarted, receiveNanos, meshNanos, pageNanos, visibilityNanos, 0L);
             return;
         }
+        var draw = new LodDraw(activeLink, camera, viewRadius, maximumIndexCount, transitionTime);
         long drawStarted = System.nanoTime();
-        if (sodiumLoaded) {
+        drawVisible(event, draw);
+        if (MiaMods.DISTANTHORIZONS.isLoaded() && !irisShaders) pendingDhRedraw = draw;
+        recordTiming(
+                callbackStarted,
+                receiveNanos,
+                meshNanos,
+                pageNanos,
+                visibilityNanos,
+                System.nanoTime() - drawStarted);
+    }
+
+    void redrawAfterDh(RenderLevelStageEvent.AfterLevel event) {
+        if (pendingDhBridge) {
+            pendingDhBridge = false;
+            if (bridging()) renderBridge(event);
+        }
+        var draw = pendingDhRedraw;
+        pendingDhRedraw = null;
+        if (draw != null
+                && draw.link().equals(activeRenderLink)
+                && Minecraft.getInstance().level != null
+                && Minecraft.getInstance().level.dimension().equals(draw.link().target())) {
+            // DH's vanilla fade replaces custom terrain drawn into Minecraft's target.
+            // Reuse this frame's visible meshes after the fade. Depth testing preserves
+            // foreground blocks and water without repeating terrain or mesh preparation.
+            drawVisible(event, draw);
+        }
+    }
+
+    private void drawVisible(RenderLevelStageEvent event, LodDraw draw) {
+        if (MiaMods.SODIUM.isLoaded()) {
             for (TextureAtlasSprite sprite : VISIBLE_SPRITES) {
                 SodiumLodCompat.markSpriteActive(sprite);
             }
         }
 
+        var minecraft = Minecraft.getInstance();
+        var activeLink = draw.link();
+        var camera = draw.camera();
+        int viewRadius = draw.viewRadius();
+        int maximumIndexCount = draw.maximumIndexCount();
+        long transitionTime = draw.transitionTime();
+        boolean irisShaders = IrisRenderCompat.isShaderPackInUse();
         var pipeline =
                 irisShaders
                         ? CrossDimensionLodRenderTypes.irisBlocksPipeline()
@@ -905,13 +926,6 @@ final class CrossDimensionLodRenderContext {
             pass.drawMultipleIndexed(
                     draws, indices, indexStorage.type(), List.of("DynamicTransforms"), null);
         }
-        recordTiming(
-                callbackStarted,
-                receiveNanos,
-                meshNanos,
-                pageNanos,
-                visibilityNanos,
-                System.nanoTime() - drawStarted);
     }
 
     void bridgeTo(ClientLevel destination) {
@@ -931,7 +945,7 @@ final class CrossDimensionLodRenderContext {
                 && !CurrentTerrainReadiness.ready(bridgeLevel);
     }
 
-    private void renderBridge(RenderLevelStageEvent.AfterOpaqueBlocks event) {
+    private void renderBridge(RenderLevelStageEvent event) {
         var mc = Minecraft.getInstance();
         var camera = event.getLevelRenderState().cameraRenderState.pos;
         int offset = activeRenderLink.displayYOffset();
@@ -986,7 +1000,7 @@ final class CrossDimensionLodRenderContext {
         }
     }
 
-    private void updateCameraView(RenderLevelStageEvent.AfterOpaqueBlocks event, String linkId) {
+    private void updateCameraView(RenderLevelStageEvent event, String linkId) {
         var camera = event.getLevelRenderState().cameraRenderState;
         if (camera.projectionMatrix == null || camera.viewRotationMatrix == null) return;
         Matrix4f clip = new Matrix4f(camera.projectionMatrix).mul(camera.viewRotationMatrix);
@@ -2338,7 +2352,8 @@ final class CrossDimensionLodRenderContext {
     }
 
     private boolean lodEnabled() {
-        return MementoInAbyss.CONFIGS.graphsSection.crossDimensionLodEnabled.get();
+        return !DhCrossDimensionLod.replacesMiaRenderer()
+                && MementoInAbyss.CONFIGS.graphsSection.crossDimensionLodEnabled.get();
     }
 
     private enum ClientState {
@@ -2431,6 +2446,13 @@ final class CrossDimensionLodRenderContext {
             return size;
         }
     }
+
+    private record LodDraw(
+            CrossDimensionLodLink link,
+            Vec3 camera,
+            int viewRadius,
+            int maximumIndexCount,
+            long transitionTime) {}
 
     private record RankedKey(long key, double priority) {}
 
